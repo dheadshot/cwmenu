@@ -48,6 +48,14 @@ struct ItemPropNode *FindItemProps(unsigned long itemid);
 unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
   unsigned int height, unsigned long bgcolour, unsigned long selfgcolour, 
   unsigned long unselfgcolour, char *itemtext);
+int DrawItem(unsigned long itemid);
+int FreeWindow(Window awin);
+void DestroyItems();
+void DestroyWins();
+int DrawItems(Window awin);
+unsigned long Getitemclicked();
+int MouseOver(Window awin, int x, int y, unsigned int btnstate);
+int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown);
 
 
 
