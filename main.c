@@ -67,10 +67,57 @@ int main(int argc, char *argv[])
   
   XEvent event;
   KeySym key;
+  char text[256] = "";
   unsigned long lastitemclicked;
+  struct WinPropNode *mwprop = FindWinProps(mainwindow);
   
   while (1)
   {
     /* Message Loop */
+    XNextEvent(thedisplay, &event);
+    
+    if (event.type == Expose && event.xexpose.count == 0)
+    {
+      /* Redraw Window! */
+      XSetBackground(mwprop->disp, mwprop->gc, black);
+      XClearWindow(mwprop->disp, mainwindow);
+      DrawItems(mainwindow);
+      XFlush(thedisplay);
+    }
+    
+    if (event.type == KeyPress && XLookupString(&event.xkey, text, 255, &key, 0) == 1)
+    {
+      if (text[0] == 'q') close_x(); /* For DEBUGGING ONLY */
+      else printf("The %c (%d) key was pressed\n", text[0], text[0]);
+    }
+    
+    if (event.type == ButtonPress)
+    {
+      /* Mouse Clicked */
+      ClickItem(event.xbutton.window, event.xbutton.x, event.xbutton.y, event.xbutton.button, 1);
+      /* lastitemclicked = Getitemclicked();
+      printf("Clicked item %lu.\n", lastitemclicked); */
+    }
+    
+    if (event.type == ButtonRelease)
+    {
+      /* Mouse Clicked */
+      ClickItem(event.xbutton.window, event.xbutton.x, event.xbutton.y, event.xbutton.button, 0);
+      lastitemclicked = Getitemclicked();
+      printf("Clicked item %lu.\n", lastitemclicked);
+    }
+    
+    if (item.type == MotionNotify)
+    {
+      MouseOver(event.xmotion.window, event.xmotion.x, event.xmotion.y, event.xmotion.state);
+      
+    }
+    
+    if (event.type == DestroyNotify || event.type == ClientMessage)
+    {
+      /* Closed window ? */
+      close_x();
+    }
   }
+  return 1;
 }
