@@ -11,6 +11,8 @@ struct WinPropNode *winsroot = NULL, *winsptr = NULL;
 struct ItemPropNode *itemsroot = NULL; *itemsptr = NULL;
 
 unsigned long itemidmax = 0;
+unsigned long itemclicked = 0;
+int mouseclickdown = 0;
 
 
 unsigned long get_colour(char *acolour, Display *dis, int screen)
@@ -216,6 +218,171 @@ int DrawItem(unsigned long itemid)
   }
   
   XDrawString(winsptr->disp, (Drawable) winsptr->win, winsptr->gc, ax, ay, itemsptr->itemtext, strlen(itemsptr->itemtext));
+  
+  return 1;
+}
+
+int FreeWindow(Window awin)
+{
+  /* Returns 0 if can't find item, -1 if gone really wrong */
+  struct WinPropNode *twin;
+  if (FindWinProps(awin) == NULL) return 0;
+  
+  /* Free items in awin */
+  struct ItemPropNode *titem, *previtem = NULL;
+  itemsptr = itemsroot;
+  while (itemsptr != NULL)
+  {
+    titem = itemsptr->next;
+    if (itemsptr->win == awin)
+    {
+      if (previtem == NULL)
+      {
+        itemsroot = titem;
+        free(itemsptr);
+      }
+      else
+      {
+        previtem->next = titem;
+        free(itemsptr);
+      }
+    }
+    else
+    {
+      previtem = itemsptr;
+    }
+    itemsptr = titem;
+  }
+  
+  FindWinProps(awin);
+  XFreeGC(winsptr->gc);
+  XDestroyWindow(winsptr->disp, awin);
+  XFlush(winsptr->disp);
+  if (winsptr == winsroot)
+  {
+    winsroot = winsptr->next;
+    free(winsptr);
+  }
+  else
+  {
+    twin = winsroot;
+    while (twin->next!= NULL && twin->next->win != awin) twin = twin->next;
+    if (twin->next == NULL) return -1;
+    twin->next = winsptr->next;
+    free(winsptr);
+  }
+  return 1;
+}
+
+void DestroyItems()
+{
+  struct ItemPropNode *titem;
+  itemsptr = itemsroot;
+  while (itemsptr != NULL)
+  {
+    titem = itemsptr->next;
+    itemsroot = titem;
+    free(itemsptr);
+    itemsptr = titem;
+  }
+  itemsroot = NULL;
+}
+
+void DestroyWins()
+{
+  struct WinPropNode *twin;
+  winsptr = winsroot;
+  while (winsptr != NULL)
+  {
+    twin = winsptr->next;
+    winsroot = twin;
+    FreeWindow(winsptr->win);
+    winsptr = twin;
+  }
+  winsroot = NULL;
+}
+
+int DrawItems(Window awin)
+{
+  struct ItemPropNode *titem;
+  
+  if (FindWinProps(awin) == NULL) return 0;
+  
+  XClearWindow(winsptr->disp, awin);
+  
+  for (itemsptr = itemsroot; itemsptr != NULL; itemsptr = itemsptr->next)
+  {
+    if (itemsptr->win == awin)
+    {
+      FindWinProps(awin);
+      if (itemsptr->curx <= winsptr->width && itemsptr->cury <= winsptr->height && (itemsptr->curx + itemsptr->width) >= 0 && (itemsptr->cury + itemsptr->height) >= 0)
+      {
+        /* Only draw if on screen */
+        titem = itemsptr;
+        DrawItem(itemsptr->itemid); /* Might clobber itemsptr! */
+        itemsptr = titem;
+      }
+    }
+  }
+  
+  FindWinProps(awin);
+  XFlush(winsptr->disp);
+  
+  return 1;
+}
+
+unsigned long Getitemclicked()
+{
+  return itemclicked;
+}
+
+int MouseOver(Window awin, int x, int y, unsigned int btnstate)
+{
+  if (FindWinProps(awin) == NULL) return 0;
+  
+  for (itemsptr = itemsroot; itemsptr != NULL; itemsptr = itemsptr->next)
+  {
+    if (itemsptr->win == awin)
+    {
+      FindWinProps(awin);
+      if (itemsptr->curx <= x && itemsptr->cury <= y && (itemsptr->curx + itemsptr->width) >= x && (itemsptr->cury + itemsptr->height) >= y)
+      {
+        winsptr->selitem = itemsptr->itemid;
+      }
+    }
+  }
+  DrawItems(awin);
+  return 1;
+}
+
+int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown);
+{
+  if (FindWinProps(awin) == NULL) return 0;
+  itemclicked = 0;
+  if (mousebtn != 1) return 1; /* Ignore all but left click */
+  if (btndown != 0)
+  {
+    mouseclickdown = 1;
+    return 1;
+  }
+  if (mouseclickdown == 0)
+  {
+    /* Was clicked off-screen */
+    return 1;
+  }
+  
+  for (itemsptr = itemsroot; itemsptr != NULL; itemsptr = itemsptr->next)
+  {
+    if (itemsptr->win == awin)
+    {
+      FindWinProps(awin);
+      if (itemsptr->curx <= x && itemsptr->cury <= y && (itemsptr->curx + itemsptr->width) >= x && (itemsptr->cury + itemsptr->height) >= y)
+      {
+        winsptr->selitem = itemsptr->itemid;
+        itemclicked = itemsptr->itemid;
+      }
+    }
+  }
   
   return 1;
 }
