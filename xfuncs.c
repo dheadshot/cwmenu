@@ -8,7 +8,7 @@
 
 
 struct WinPropNode *winsroot = NULL, *winsptr = NULL;
-struct ItemPropNode *itemsroot = NULL; *itemsptr = NULL;
+struct ItemPropNode *itemsroot = NULL, *itemsptr = NULL;
 
 unsigned long itemidmax = 0;
 unsigned long itemclicked = 0;
@@ -56,7 +56,7 @@ int GetTextAscent(Display *disp, GC agc, char *sometext)
   
   XTextExtents(fontdata, sometext, textcount, &dirhint, &ta, &td, &tdata);
   
-  XFreeFontInfo(NULL, fontdata, 0)
+  XFreeFontInfo(NULL, fontdata, 0);
   return ta;
 }
 
@@ -74,7 +74,7 @@ int GetTextDescent(Display *disp, GC agc, char *sometext)
   
   XTextExtents(fontdata, sometext, textcount, &dirhint, &ta, &td, &tdata);
   
-  XFreeFontInfo(NULL, fontdata, 0)
+  XFreeFontInfo(NULL, fontdata, 0);
   return td;
 }
 
@@ -129,11 +129,11 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   winsptr->disp = disp;
   winsptr->parent = parent;
   winsptr->win = XCreateSimpleWindow(disp, parent, x, y, width, height, borderwidth, bordercol, bgcol);
-  XSetStandardProperties(disp, winsptr->win, caption, iconcaption, icon, argv, argc, hints;
+  XSetStandardProperties(disp, winsptr->win, caption, iconcaption, icon, argv, argc, hints);
   XSelectInput(disp, winsptr->win, ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | StructureNotifyMask | PointerMotionMask);
   
   Atom wmDelete = XInternAtom(disp, "WM_DELETE_WINDOW", True);
-  XSetWMProtocols(disp,winsptr->win, &wmdelete, 1);
+  XSetWMProtocols(disp,winsptr->win, &wmDelete, 1);
   
   winsptr->gc = XCreateGC(disp, winsptr->win, 0, 0);
   
@@ -255,7 +255,7 @@ int FreeWindow(Window awin)
   }
   
   FindWinProps(awin);
-  XFreeGC(winsptr->gc);
+  XFreeGC(winsptr->disp,winsptr->gc);
   XDestroyWindow(winsptr->disp, awin);
   XFlush(winsptr->disp);
   if (winsptr == winsroot)
@@ -305,6 +305,10 @@ void DestroyWins()
 int DrawItems(Window awin)
 {
   struct ItemPropNode *titem;
+  unsigned int winw, winh, winbw, windepth;
+  int winx, winy;
+  Window rootret;
+  
   
   if (FindWinProps(awin) == NULL) return 0;
   
@@ -315,7 +319,8 @@ int DrawItems(Window awin)
     if (itemsptr->win == awin)
     {
       FindWinProps(awin);
-      if (itemsptr->curx <= winsptr->width && itemsptr->cury <= winsptr->height && (itemsptr->curx + itemsptr->width) >= 0 && (itemsptr->cury + itemsptr->height) >= 0)
+      XGetGeometry(winsptr->disp, (Drawable) awin, &rootret, &winx, &winy, &winw, &winh, &winbw, &windepth);
+      if (itemsptr->curx <= winw && itemsptr->cury <= winh && (itemsptr->curx + itemsptr->width) >= 0 && (itemsptr->cury + itemsptr->height) >= 0)
       {
         /* Only draw if on screen */
         titem = itemsptr;
@@ -355,7 +360,7 @@ int MouseOver(Window awin, int x, int y, unsigned int btnstate)
   return 1;
 }
 
-int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown);
+int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown)
 {
   if (FindWinProps(awin) == NULL) return 0;
   itemclicked = 0;

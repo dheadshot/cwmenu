@@ -3,7 +3,7 @@
 
 #include "xfuncs.h"
 
-Display thedisplay;
+Display *thedisplay;
 int thescreen;
 Window mainwindow;
 
@@ -12,8 +12,9 @@ unsigned long black, white, green, lime;
 int init_x()
 {
   /* Returns 0 if it can't make the Window. */
-  int winx = 0, winy = 0, ans = 1;;
-  unsigned int winw = 300, winh = 200, winbord = 5;
+  int winx = 0, winy = 0, ans = 1;
+  Window rootret;
+  unsigned int winw = 300, winh = 200, winbord = 5, depthret;
   unsigned long winbordcol, winbgcol;
   struct WinPropNode *mwprop;
   
@@ -21,8 +22,8 @@ int init_x()
   thescreen = DefaultScreen(thedisplay);
   black = BlackPixel(thedisplay, thescreen);
   white = WhitePixel(thedisplay, thescreen);
-  lime = get_colour("green");
-  green = get_colour("dark green");
+  lime = get_colour("green", thedisplay, thescreen);
+  green = get_colour("dark green", thedisplay, thescreen);
   winbordcol = black;
   winbgcol = black;
   
@@ -35,7 +36,8 @@ int init_x()
   else
   {
     mainwindow = mwprop->win;
-    int ity = 5, itx = 5, itw = mwprop->width-10, mwh = mwprop->height;
+    XGetGeometry(mwprop->disp, (Drawable) mwprop->win, &rootret, &winx, &winy, &winw, &winh, &winbord, &depthret);
+    int ity = 5, itx = 5, itw = winw-10, mwh = winh;
     int ith = 10;
     ith = GetTextHeight(mwprop->disp, mwprop->gc, "Menu Item 1")+10;
     CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 1");
@@ -107,7 +109,7 @@ int main(int argc, char *argv[])
       printf("Clicked item %lu.\n", lastitemclicked);
     }
     
-    if (item.type == MotionNotify)
+    if (event.type == MotionNotify)
     {
       MouseOver(event.xmotion.window, event.xmotion.x, event.xmotion.y, event.xmotion.state);
       
