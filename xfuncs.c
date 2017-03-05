@@ -1,8 +1,13 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
+#ifdef HAVE_XFT
+#include <X11/Xft/Xft.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
+
+#include <stdio.h> /* For debugging only! */
 
 #include "xfuncs.h"
 
@@ -13,7 +18,24 @@ struct ItemPropNode *itemsroot = NULL, *itemsptr = NULL;
 unsigned long itemidmax = 0;
 unsigned long itemclicked = 0;
 int mouseclickdown = 0;
+#ifdef HAVE_XFT
+//XftFont *afont = NULL;
+#else
+//XFontStruct *afont == NULL;
+#endif
 
+/*
+int initfont(Display *disp, char *fontname)
+{
+#ifdef HAVE_XFT
+  afont = XftFontOpenName(disp, DefaultScreen(disp), fontname);
+#else
+  afont = XLoadQueryFont(disp, fontname);
+#endif
+  if (afont == NULL) return 0;
+  return 1;
+}
+*/
 
 unsigned long get_colour(char *acolour, Display *dis, int screen)
 {
@@ -23,6 +45,72 @@ unsigned long get_colour(char *acolour, Display *dis, int screen)
   XAllocColor(dis, DefaultColormap(dis, screen), &tmp);
   return tmp.pixel;
 }
+
+
+#ifdef HAVE_XFT
+int get_xft_colour(XftColor *result, unsigned short redv, 
+  unsigned short greenv, unsigned short bluev, unsigned short alphav, 
+  Display *disp, int screen)
+{
+  XRenderColor col;
+  int ans;
+  
+  	printf("##Assigning the colours...\n");
+  col.red = redv;
+  col.blue = bluev;
+  col.green = greenv;
+  col.alpha = alphav;
+  	printf("##... And create...\n");
+  if (XftColorAllocValue(disp, DefaultVisual(disp, screen), 
+                         DefaultColormap(disp, screen), &col, result))
+  {
+    ans = 1;
+    	printf("##... Done!\n");
+  } else ans = 0;
+  return ans;
+}
+
+void free_xft_colour(Display *disp, int screen, XftColor *xftcolour)
+{
+  XftColorFree(disp, DefaultVisual(disp, screen), DefaultColormap(disp, screen), xftcolour);
+}
+
+int GetXftTextAscent(Display *disp, XftFont *afont, char *sometext)
+{
+  /*  return afont->ascent;*/
+  XGlyphInfo xgi;
+  XftTextExtents8(disp, afont, (XftChar8 *)sometext, strlen(sometext), &xgi);
+  /*	printf("##Height = %u, Y = %d.\n",xgi.height,xgi.y);*/
+  return (xgi.y);
+  
+}
+
+unsigned short GetXftTextHeight(Display *disp, XftFont *afont, char *sometext)
+{
+  XGlyphInfo xgi;
+  XftTextExtents8(disp, afont, (XftChar8 *)sometext, strlen(sometext), &xgi);
+/*  	printf("##Height = %u, Y = %d.\n",xgi.height,xgi.y);*/
+  return (xgi.height);
+}
+
+int GetXftTextDescent(Display *disp, XftFont *afont, char *sometext)
+{
+  /*return (GetXftTextHeight(disp,afont,sometext) - GetXftTextAscent(disp,afont,sometext));*/
+  XGlyphInfo xgi;
+  XftTextExtents8(disp, afont, (XftChar8 *)sometext, strlen(sometext), &xgi);
+  /*	printf("##Height = %u, Y = %d.\n",xgi.height,xgi.y);*/
+  return (xgi.height - xgi.y);
+  
+}
+
+int GetXftTextLength(Display *disp, XftFont *afont, char *sometext)
+{
+  XGlyphInfo xgi;
+  XftTextExtents8(disp, afont, (XftChar8 *)sometext, strlen(sometext), &xgi);
+  return (xgi.width - xgi.x);
+}
+
+#endif
 
 
 int GetTextLength(Display *disp, GC agc, char *sometext)
@@ -136,6 +224,12 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   XSetWMProtocols(disp,winsptr->win, &wmDelete, 1);
   
   winsptr->gc = XCreateGC(disp, winsptr->win, 0, 0);
+#ifdef HAVE_XFT
+  winsptr->xftdc = XftDrawCreate(disp, winsptr->win, DefaultVisual(disp, DefaultScreen(disp)), DefaultColormap(disp, DefaultScreen(disp)));
+  XSetWindowAttributes xswa;
+  xswa.colormap = DefaultColormap(disp, DefaultScreen(disp));
+  XChangeWindowAttributes(disp, winsptr->win, CWColormap, &xswa);
+#endif
   
   XSetBackground(disp, winsptr->gc, bgcol);
   XSetForeground(disp, winsptr->gc, fgcol);
@@ -154,9 +248,15 @@ struct ItemPropNode *FindItemProps(unsigned long itemid)
   return itemsptr;
 }
 
+#ifdef HAVE_XFT
+unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
+  unsigned int height, XftColor *bgcolour, XftColor *selcolour, 
+  XftColor *unselcolour, XftFont *afont, char *itemtext)
+#else
 unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
   unsigned int height, unsigned long bgcolour, unsigned long selfgcolour, 
   unsigned long unselfgcolour, char *itemtext)
+#endif
 {
   if (FindWinProps(awin) == NULL) return 0;
   
@@ -182,9 +282,16 @@ unsigned long CreateItem(Window awin, int x, int y, unsigned int width,
   itemsptr->cury = y;
   itemsptr->width = width;
   itemsptr->height = height;
+#ifdef HAVE_XFT
+  itemsptr->xftbgcolour = bgcolour;
+  itemsptr->xftselcolour = selcolour;
+  itemsptr->xftunselcolour = unselcolour;
+  itemsptr->font = afont;
+#else
   itemsptr->bgcolour = bgcolour;
   itemsptr->selfgcolour = selfgcolour;
   itemsptr->unselfgcolour = unselfgcolour;
+#endif
   strcpy(itemsptr->itemtext, itemtext);
   itemsptr->win = awin;
   
@@ -202,6 +309,22 @@ int DrawItem(unsigned long itemid)
   XSetForeground(winsptr->disp, winsptr->gc, itemsptr->bgcolour);
   XFillRectangle(winsptr->disp, (Drawable) winsptr->win, winsptr->gc, itemsptr->curx, itemsptr->cury, itemsptr->width, itemsptr->height);
   
+#ifdef HAVE_XFT
+  int ta = GetXftTextAscent(winsptr->disp, itemsptr->font, itemsptr->itemtext);
+  int tbw = GetXftTextLength(winsptr->disp, itemsptr->font, itemsptr->itemtext);
+  int ax, ay;
+  ax = itemsptr->curx + (itemsptr->width/2) - (tbw/2);
+  ay = itemsptr->cury + (itemsptr->height/2) + ta;
+  
+  if (winsptr->selitem == itemid)
+  {
+    XftDrawString8(winsptr->xftdc, itemsptr->xftselcolour, itemsptr->font, ax, ay, itemsptr->itemtext, strlen(itemsptr->itemtext));
+  }
+  else
+  {
+    XftDrawString8(winsptr->xftdc, itemsptr->xftunselcolour, itemsptr->font, ax, ay, itemsptr->itemtext, strlen(itemsptr->itemtext));
+  }
+#else
   int ta = GetTextAscent(winsptr->disp, winsptr->gc, itemsptr->itemtext);
   int tbw = GetTextLength(winsptr->disp, winsptr->gc, itemsptr->itemtext);
   int ax, ay;
@@ -218,6 +341,7 @@ int DrawItem(unsigned long itemid)
   }
   
   XDrawString(winsptr->disp, (Drawable) winsptr->win, winsptr->gc, ax, ay, itemsptr->itemtext, strlen(itemsptr->itemtext));
+#endif
   
   return 1;
 }
@@ -256,6 +380,9 @@ int FreeWindow(Window awin)
   
   FindWinProps(awin);
   XFreeGC(winsptr->disp,winsptr->gc);
+#ifdef HAVE_XFT
+  XftDrawDestroy(winsptr->xftdc);
+#endif
   XDestroyWindow(winsptr->disp, awin);
   XFlush(winsptr->disp);
   if (winsptr == winsroot)
@@ -391,3 +518,4 @@ int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown)
   
   return 1;
 }
+
