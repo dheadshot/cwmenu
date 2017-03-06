@@ -171,7 +171,32 @@ int main(int argc, char *argv[])
     }
     else if (event.type == KeyPress)
     {
+      unsigned long tiid;
       printf("Key press: %x\n",event.xkey.keycode);
+      if (event.xkey.keycode == 0x6f || event.xkey.keycode == 0x71)
+      {
+        /* UP or LEFT */
+        tiid = mwprop->selitem;
+        tiid = PrevItemInWindow(mainwindow, tiid);
+        if (tiid != 0)
+        {
+          /* Select item tiid */
+          mwprop->selitem = tiid;
+          DrawItems(mainwindow);
+        }
+      }
+      else if (event.xkey.keycode == 0x72 || event.xkey.keycode == 0x74)
+      {
+        /* RIGHT or DOWN */
+        tiid = mwprop->selitem;
+        tiid = NextItemInWindow(mainwindow, tiid);
+        if (tiid != 0)
+        {
+          /* Select item tiid */
+          mwprop->selitem = tiid;
+          DrawItems(mainwindow);
+        }
+      }
     }
     
     if (event.type == ButtonPress)

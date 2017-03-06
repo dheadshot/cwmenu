@@ -86,6 +86,8 @@ int DrawItems(Window awin);
 unsigned long Getitemclicked();
 int MouseOver(Window awin, int x, int y, unsigned int btnstate);
 int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown);
+unsigned long PrevItemInWindow(Window awin, unsigned long itemid);
+unsigned long NextItemInWindow(Window awin, unsigned long itemid);
 
 
 

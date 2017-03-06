@@ -523,7 +523,34 @@ int ClickItem(Window awin, int x, int y, unsigned int mousebtn, int btndown)
       }
     }
   }
+  DrawItems(awin);
   
   return 1;
 }
 
+
+unsigned long PrevItemInWindow(Window awin, unsigned long itemid)
+{
+  unsigned long tiid = itemid;
+  while (tiid > 0)
+  {
+    tiid--;
+    if (FindItemProps(tiid) == NULL) continue;
+    if (itemsptr->win == awin) break;
+  }
+  return tiid;
+}
+
+
+unsigned long NextItemInWindow(Window awin, unsigned long itemid)
+{
+  unsigned long tiid = itemid;
+  while (tiid <= itemidmax)
+  {
+    tiid++;
+    if (FindItemProps(tiid) == NULL) continue;
+    if (itemsptr->win == awin) break;
+  }
+  if (tiid > itemidmax) return 0;
+  return tiid;
+}
