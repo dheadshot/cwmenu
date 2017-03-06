@@ -306,8 +306,12 @@ int DrawItem(unsigned long itemid)
   if (FindWinProps(itemsptr->win) == NULL) return 0;
   
   //d=win
+#ifdef HAVE_XFT
+  XftDrawRect(winsptr->xftdc, itemsptr->xftbgcolour, itemsptr->curx, itemsptr->cury, itemsptr->width, itemsptr->height);
+#else
   XSetForeground(winsptr->disp, winsptr->gc, itemsptr->bgcolour);
   XFillRectangle(winsptr->disp, (Drawable) winsptr->win, winsptr->gc, itemsptr->curx, itemsptr->cury, itemsptr->width, itemsptr->height);
+#endif
   
 #ifdef HAVE_XFT
   int ta = GetXftTextAscent(winsptr->disp, itemsptr->font, itemsptr->itemtext);
@@ -470,7 +474,10 @@ unsigned long Getitemclicked()
 
 int MouseOver(Window awin, int x, int y, unsigned int btnstate)
 {
+  unsigned long oldselitem;
+  
   if (FindWinProps(awin) == NULL) return 0;
+  oldselitem = winsptr->selitem;
   
   for (itemsptr = itemsroot; itemsptr != NULL; itemsptr = itemsptr->next)
   {
@@ -483,7 +490,8 @@ int MouseOver(Window awin, int x, int y, unsigned int btnstate)
       }
     }
   }
-  DrawItems(awin);
+  if (winsptr->selitem != oldselitem) DrawItems(awin);
+  
   return 1;
 }
 

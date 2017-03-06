@@ -169,6 +169,10 @@ int main(int argc, char *argv[])
       if (text[0] == 'q') close_x(); /* For DEBUGGING ONLY */
       else printf("The %c (%d) key was pressed\n", text[0], text[0]);
     }
+    else if (event.type == KeyPress)
+    {
+      printf("Key press: %x\n",event.xkey.keycode);
+    }
     
     if (event.type == ButtonPress)
     {
