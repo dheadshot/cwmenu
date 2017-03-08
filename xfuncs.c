@@ -316,17 +316,21 @@ int DrawItem(unsigned long itemid)
 #ifdef HAVE_XFT
   int ta = GetXftTextAscent(winsptr->disp, itemsptr->font, itemsptr->itemtext);
   int tbw = GetXftTextLength(winsptr->disp, itemsptr->font, itemsptr->itemtext);
+  int bulw = GetXftTextLength(winsptr->disp, itemsptr->font, "\xB7 ");
   int ax, ay;
-  ax = itemsptr->curx + (itemsptr->width/2) - (tbw/2);
+  char bul[] = "\xB7 ";
+  ax = itemsptr->curx + bulw + ((itemsptr->width - bulw)/2) - (tbw/2);
   ay = itemsptr->cury + (itemsptr->height/2) + ta;
   
   if (winsptr->selitem == itemid)
   {
     XftDrawString8(winsptr->xftdc, itemsptr->xftselcolour, itemsptr->font, ax, ay, itemsptr->itemtext, strlen(itemsptr->itemtext));
+    XftDrawString8(winsptr->xftdc, itemsptr->xftselcolour, itemsptr->font, itemsptr->curx, ay, bul, strlen(bul));
   }
   else
   {
     XftDrawString8(winsptr->xftdc, itemsptr->xftunselcolour, itemsptr->font, ax, ay, itemsptr->itemtext, strlen(itemsptr->itemtext));
+    XftDrawString8(winsptr->xftdc, itemsptr->xftunselcolour, itemsptr->font, itemsptr->curx, ay, bul, strlen(bul));
   }
 #else
   int ta = GetTextAscent(winsptr->disp, winsptr->gc, itemsptr->itemtext);
@@ -553,4 +557,21 @@ unsigned long NextItemInWindow(Window awin, unsigned long itemid)
   }
   if (tiid > itemidmax) return 0;
   return tiid;
+}
+
+
+int ResizeItems(Window awin, unsigned int newwidth, unsigned int newheight)
+{
+  /* If newwidth == 0, do not change it, ditto newheight! */
+  if (newwidth == 0 && newheight == 0) return 0;
+  for (itemsptr = itemsroot; itemsptr != NULL; itemsptr = itemsptr->next)
+  {
+    if (itemsptr->win == awin)
+    {
+      if (newwidth != 0) itemsptr->width = newwidth;
+      if (newheight != 0) itemsptr->height = newheight;
+    }
+  }
+  DrawItems(awin);
+  return 1;
 }

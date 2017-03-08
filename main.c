@@ -78,7 +78,7 @@ int init_x()
     if (xfs == NULL) printf("Cannot find font.\n");
     DoListFonts();*/
 #ifdef HAVE_XFT
-    keenfont = XftFontOpenName(thedisplay, thescreen, "Keen 1FON0000-12");
+    keenfont = XftFontOpenName(thedisplay, thescreen, "Keen 4 Menu Font-12");
     if (keenfont == NULL) printf("Cannot find Keen font.\n");
     sgafont = XftFontOpenName(thedisplay, thescreen, "SGA K3 Direct-12");
     if (sgafont == NULL) printf("Cannot find SGA font.\n");
@@ -91,15 +91,18 @@ int init_x()
     int ith = 10;
     	printf("#Drawing the Items...\n");
 #ifdef HAVE_XFT
-    ith = GetXftTextHeight(mwprop->disp, keenfont, "Menu Item 1")+10;
+    ith = GetXftTextHeight(mwprop->disp, keenfont, "MENU ITEM 1")+10;
     	printf("#Text height is %d\n",ith);
-    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, "Menu Item 1");
+    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, "MENU ITEM 1");
     ity += ith + 5;
     ith = GetXftTextHeight(mwprop->disp, keenfont, "Menu Item 2")+10;
     CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, sgafont, "Menu Item 2");
     ity += ith + 5;
-    ith = GetXftTextHeight(mwprop->disp, keenfont, "Menu Item 3")+10;
-    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, "Menu Item 3");
+    char mi3[] = "Menu Item 3 ____";
+    mi3[12] = 0xB7;
+    mi3[13] = 0xD7;
+    ith = GetXftTextHeight(mwprop->disp, keenfont, mi3)+10;
+    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, mi3);
 #else
     ith = GetTextHeight(mwprop->disp, mwprop->gc, "Menu Item 1")+10;
     CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 1");
@@ -157,6 +160,15 @@ int main(int argc, char *argv[])
       /* Redraw Window! */
       if (event.xany.window == mainwindow)
       {
+        Window rootret;
+        int winx, winy;
+        unsigned int winw, winh, winbord, depthret;
+        
+        XGetGeometry(mwprop->disp, (Drawable) mainwindow, &rootret, &winx, &winy, &winw, &winh, &winbord, &depthret);
+        if (winw >= 200)
+        {
+          ResizeItems(mainwindow, winw, 0);
+        }
         XSetBackground(mwprop->disp, mwprop->gc, black);
         XClearWindow(mwprop->disp, mainwindow);
         DrawItems(mainwindow);
