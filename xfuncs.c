@@ -241,6 +241,18 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   return winsptr;
 }
 
+Window GetItemWin(unsigned long itemid)
+{
+  if (FindItemProps(itemid) == NULL) return -1;
+  return itemsptr->win;
+}
+
+unsigned long GetItemWIH(unsigned long itemid)
+{
+  if (FindItemProps(itemid) == NULL) return 0;
+  return itemsptr->winitemhandle;
+}
+
 struct ItemPropNode *FindItemProps(unsigned long itemid)
 {
   itemsptr = itemsroot;
@@ -248,17 +260,26 @@ struct ItemPropNode *FindItemProps(unsigned long itemid)
   return itemsptr;
 }
 
+struct ItemPropNode *FindItemWIH(Window awin, unsigned long wih)
+{
+  itemsptr = itemsroot;
+  while (itemsptr != NULL && (itemsptr->win != awin || itemsptr->winitemhandle != wih)) itemsptr = itemsptr->next;
+  return itemsptr;
+}
+
 #ifdef HAVE_XFT
 unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
   unsigned int height, XftColor *bgcolour, XftColor *selcolour, 
-  XftColor *unselcolour, XftFont *afont, char *itemtext)
+  XftColor *unselcolour, XftFont *afont, char *itemtext, 
+  unsigned long winitemhandle)
 #else
 unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
   unsigned int height, unsigned long bgcolour, unsigned long selfgcolour, 
-  unsigned long unselfgcolour, char *itemtext)
+  unsigned long unselfgcolour, char *itemtext, unsigned long winitemhandle)
 #endif
 {
   if (FindWinProps(awin) == NULL) return 0;
+  if (FindItemWIH(awin, winitemhandle) != NULL) return 0;
   
   if (itemsroot == NULL)
   {
@@ -282,6 +303,7 @@ unsigned long CreateItem(Window awin, int x, int y, unsigned int width,
   itemsptr->cury = y;
   itemsptr->width = width;
   itemsptr->height = height;
+  itemsptr->winitemhandle = winitemhandle;
 #ifdef HAVE_XFT
   itemsptr->xftbgcolour = bgcolour;
   itemsptr->xftselcolour = selcolour;

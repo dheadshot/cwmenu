@@ -26,6 +26,7 @@ struct WinPropNode {
 
 struct ItemPropNode {
   unsigned long itemid;
+  unsigned long winitemhandle;
   int curx;
   int cury;
   unsigned int width;
@@ -68,15 +69,19 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   int x, int y, unsigned int width, unsigned int height, 
   unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
   unsigned long fgcol);
+Window GetItemWin(unsigned long itemid);
+unsigned long GetItemWIH(unsigned long itemid);
 struct ItemPropNode *FindItemProps(unsigned long itemid);
+struct ItemPropNode *FindItemWIH(Window awin, unsigned long wih);
 #ifdef HAVE_XFT
 unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
   unsigned int height, XftColor *bgcolour, XftColor *selcolour, 
-  XftColor *unselcolour, XftFont *afont, char *itemtext);
+  XftColor *unselcolour, XftFont *afont, char *itemtext, 
+  unsigned long winitemhandle);
 #else
 unsigned long CreateItem(Window awin, int x, int y, unsigned int width, 
   unsigned int height, unsigned long bgcolour, unsigned long selfgcolour, 
-  unsigned long unselfgcolour, char *itemtext);
+  unsigned long unselfgcolour, char *itemtext, unsigned long winitemhandle);
 #endif
 int DrawItem(unsigned long itemid);
 int FreeWindow(Window awin);

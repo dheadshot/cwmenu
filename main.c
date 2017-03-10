@@ -6,7 +6,7 @@
 
 Display *thedisplay;
 int thescreen;
-Window mainwindow;
+Window mainwindow, subwindow;
 /* XFontStruct *xfs = NULL; */
 #ifdef HAVE_XFT
 XftFont *keenfont = NULL, *sgafont = NULL;
@@ -93,25 +93,25 @@ int init_x()
 #ifdef HAVE_XFT
     ith = GetXftTextHeight(mwprop->disp, keenfont, "MENU ITEM 1")+10;
     	printf("#Text height is %d\n",ith);
-    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, "MENU ITEM 1");
+    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, "MENU ITEM 1", 1);
     ity += ith + 5;
-    ith = GetXftTextHeight(mwprop->disp, keenfont, "Menu Item 2")+10;
-    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, sgafont, "Menu Item 2");
+    ith = GetXftTextHeight(mwprop->disp, sgafont, "Menu Item 2")+10;
+    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, sgafont, "Menu Item 2", 2);
     ity += ith + 5;
     char mi3[] = "Menu Item 3 ____";
     mi3[12] = 0xB7;
     mi3[13] = 0xD7;
     ith = GetXftTextHeight(mwprop->disp, keenfont, mi3)+10;
-    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, mi3);
+    CreateItem(mainwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, mi3, 3);
 #else
     ith = GetTextHeight(mwprop->disp, mwprop->gc, "Menu Item 1")+10;
-    CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 1");
+    CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 1", 1);
     ity += ith + 5;
     ith = GetTextHeight(mwprop->disp, mwprop->gc, "Menu Item 2")+10;
-    CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 2");
+    CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 2", 2);
     ity += ith + 5;
     ith = GetTextHeight(mwprop->disp, mwprop->gc, "Menu Item 3")+10;
-    CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 3");
+    CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 3", 3);
 #endif
     DrawItems(mainwindow);
   }
@@ -138,6 +138,81 @@ void close_x()
   exit(0);
 }
 
+int dosubwin()
+{
+  struct WinPropNode *swprop;
+  int winx = 0, winy = 0, ans = 1;
+  Window rootret;
+  unsigned int winw = 300, winh = 200, winbord = 5, depthret;
+  unsigned long winbordcol, winbgcol;
+  
+  swprop = NewWindow(thedisplay, DefaultRootWindow(thedisplay), "CompuWrist Sub Menu", "CompuWrist Sub Menu", None, NULL, 0, NULL, winx, winy, winw, winh, winbord, winbordcol, winbgcol, white);
+  if (swprop == NULL)
+  {
+    printf("Error Making Window!");
+    return 0;
+  }
+  subwindow = swprop->win;
+  XGetGeometry(swprop->disp, (Drawable) swprop->win, &rootret, &winx, &winy, &winw, &winh, &winbord, &depthret);
+  int ity = 5, itx = 5, itw = winw-10, swh = winh;
+  int ith = 10;
+    	printf("#Drawing the Items...\n");
+#ifdef HAVE_XFT
+  ith = GetXftTextHeight(swprop->disp, keenfont, "MENU ITEM 4")+10;
+    	printf("#Text height is %d\n",ith);
+  CreateItem(subwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, "MENU ITEM 4", 4);
+  ity += ith + 5;
+  ith = GetXftTextHeight(swprop->disp, sgafont, "Menu Item 5")+10;
+  CreateItem(subwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, sgafont, "Menu Item 5", 5);
+  ity += ith + 5;
+  char mi3[] = "Menu Item 6 ____";
+  mi3[12] = 0xB7;
+  mi3[13] = 0xD7;
+  ith = GetXftTextHeight(swprop->disp, keenfont, mi3)+10;
+  CreateItem(subwindow, itx, ity, itw, ith, &xblack, &xlime, &xgreen, keenfont, mi3, 6);
+#else
+  ith = GetTextHeight(swprop->disp, swprop->gc, "Menu Item 4")+10;
+  CreateItem(subwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 4", 4);
+  ity += ith + 5;
+  ith = GetTextHeight(swprop->disp, swprop->gc, "Menu Item 5")+10;
+  CreateItem(subwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 5", 5);
+  ity += ith + 5;
+  ith = GetTextHeight(swprop->disp, swprop->gc, "Menu Item 6")+10;
+  CreateItem(subwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 6", 6);
+#endif
+  DrawItems(subwindow);
+  
+  XFlush(thedisplay);
+  return 1;
+}
+
+int undosubwin()
+{
+  int ans = FreeWindow(subwindow);
+  XFlush(thedisplay);
+  return ans;
+}
+
+int ItemEvent(Window awin, unsigned long wih)
+{
+  /* Item selection event handler */
+  
+  /* Subwindow Test */
+  if (wih == 3 && awin == mainwindow)
+  {
+    if (subwindow != mainwindow && FindWinProps(subwindow) == NULL)
+    {
+      dosubwin();
+      DrawItems(subwindow);
+      XFlush(thedisplay);
+    }
+    else
+    {
+      undosubwin();
+    }
+  }
+}
+
 int main(int argc, char *argv[])
 {
   	printf("#It Begins...\n");
@@ -147,7 +222,8 @@ int main(int argc, char *argv[])
   XEvent event;
   KeySym key;
   char text[256] = "";
-  unsigned long lastitemclicked;
+  unsigned long lastitemclicked, lastwihclicked;
+  Window lastwinclicked;
   struct WinPropNode *mwprop = FindWinProps(mainwindow);
   
   while (1)
@@ -180,8 +256,24 @@ int main(int argc, char *argv[])
     {
       if (text[0] == 'q') close_x(); /* For DEBUGGING ONLY */
       else printf("The %c (%d) key was pressed\n", text[0], text[0]);
+      
+      if (text[0] == 13)
+      {
+        /* Simulate Click */
+        struct WinPropNode *awprop;
+        awprop = FindWinProps(event.xkey.window);
+        if (awprop != NULL)
+        {
+          struct ItemPropNode *aiprop;
+          aiprop = FindItemProps(awprop->selitem);
+          if (aiprop != NULL)
+          {
+            ItemEvent(event.xkey.window,aiprop->winitemhandle);
+          }
+        }
+      }
     }
-    else if (event.type == KeyPress)
+    else if (event.type == KeyPress && event.xkey.window == mainwindow)
     {
       unsigned long tiid;
       printf("Key press: %x\n",event.xkey.keycode);
@@ -210,6 +302,40 @@ int main(int argc, char *argv[])
         }
       }
     }
+    else if (event.type == KeyPress ) /*&& event.xkey.window == subwindow)*/
+    {
+      unsigned long tiid;
+      struct WinPropNode *awprop;
+      awprop = FindWinProps(event.xkey.window);
+      if (awprop != NULL)
+      {
+        printf("Key press: %x\n",event.xkey.keycode);
+        if (event.xkey.keycode == 0x6f || event.xkey.keycode == 0x71)
+        {
+          /* UP or LEFT */
+          tiid = awprop->selitem;
+          tiid = PrevItemInWindow(event.xkey.window, tiid);
+          if (tiid != 0)
+          {
+            /* Select item tiid */
+            awprop->selitem = tiid;
+            DrawItems(event.xkey.window);
+          }
+        }
+        else if (event.xkey.keycode == 0x72 || event.xkey.keycode == 0x74)
+        {
+          /* RIGHT or DOWN */
+          tiid = awprop->selitem;
+          tiid = NextItemInWindow(event.xkey.window, tiid);
+          if (tiid != 0)
+          {
+            /* Select item tiid */
+            awprop->selitem = tiid;
+            DrawItems(event.xkey.window);
+          }
+        }
+      }
+    }
     
     if (event.type == ButtonPress)
     {
@@ -225,6 +351,11 @@ int main(int argc, char *argv[])
       ClickItem(event.xbutton.window, event.xbutton.x, event.xbutton.y, event.xbutton.button, 0);
       lastitemclicked = Getitemclicked();
       printf("Clicked item %lu.\n", lastitemclicked);
+      lastwinclicked = GetItemWin(lastitemclicked);
+      lastwihclicked = GetItemWIH(lastitemclicked);
+      printf("Clicked item %X:%lu.\n",lastwinclicked, lastwihclicked);
+      
+      ItemEvent(event.xbutton.window, lastwihclicked);
     }
     
     if (event.type == MotionNotify)
@@ -237,6 +368,7 @@ int main(int argc, char *argv[])
     {
       /* Closed window ? */
       if (event.xany.window == mainwindow) close_x();
+      if (event.xany.window == subwindow) undosubwin();
     }
   }
   return 1;
