@@ -195,7 +195,7 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   char *iconcaption, Pixmap icon, char **argv, int argc, XSizeHints *hints, 
   int x, int y, unsigned int width, unsigned int height, 
   unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
-  unsigned long fgcol)
+  unsigned long fgcol, int visible)
 {
   if (winsroot == NULL)
   {
@@ -216,6 +216,7 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   winsptr->selitem = 0;
   winsptr->disp = disp;
   winsptr->parent = parent;
+  winsptr->visible = visible;
   winsptr->win = XCreateSimpleWindow(disp, parent, x, y, width, height, borderwidth, bordercol, bgcol);
   XSetStandardProperties(disp, winsptr->win, caption, iconcaption, icon, argv, argc, hints);
   XSelectInput(disp, winsptr->win, ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | StructureNotifyMask | PointerMotionMask);
@@ -235,10 +236,19 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   XSetForeground(disp, winsptr->gc, fgcol);
   
   XClearWindow(disp, winsptr->win);
-  XMapRaised(disp, winsptr->win);
+  if (visible != 0) XMapRaised(disp, winsptr->win);
   XFlush(disp);
   
   return winsptr;
+}
+
+int ChangeWindowVisibility(Window awin, int visible)
+{
+  if (FindWinProps(awin) == NULL) return 0;
+  winsptr->visible = visible;
+  if (visible != 0) XMapRaised(winsptr->disp, awin);
+  else XUnmapWindow(winsptr->disp, awin);
+  return 1;
 }
 
 Window GetItemWin(unsigned long itemid)

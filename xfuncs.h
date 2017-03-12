@@ -20,6 +20,7 @@ struct WinPropNode {
   XftDraw *xftdc; /* Xft version of GC */
   
 #endif
+  int visible;
   unsigned long selitem;
   struct WinPropNode *next;
 };
@@ -91,7 +92,8 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   char *iconcaption, Pixmap icon, char **argv, int argc, XSizeHints *hints, 
   int x, int y, unsigned int width, unsigned int height, 
   unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
-  unsigned long fgcol);
+  unsigned long fgcol, int visible);
+int ChangeWindowVisibility(Window awin, int visible);
 Window GetItemWin(unsigned long itemid);
 unsigned long GetItemWIH(unsigned long itemid);
 struct ItemPropNode *FindItemProps(unsigned long itemid);
