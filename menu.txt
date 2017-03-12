@@ -1,3 +1,12 @@
+# Sample Menu File
+# Comments are any line where the first character is a hash (#).
+
+# N.B.: Either the Fonts or the Menus may be specified first, as long as the 
+#       Items are specified last.
+
+# The "NUM" line MUST be present ONCE in each section to specify the number of 
+# Fonts/Menus/Items in that section!
+
 [FONTS]
 NUM=2
 # Format:
@@ -13,6 +22,7 @@ NUM=2
 2, "CompuWrist Sub Menu", 0, 0, 300, 200, 5
 
 [ITEMS]
+# MUST ALWAYS BE SPECIFIED LAST!!!
 NUM=7
 # Format:
 # MenuID, ItemMenuHandle, FontID, "Caption", Type, Action

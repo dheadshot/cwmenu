@@ -63,8 +63,9 @@ int ParseMenuFile(FILE *mf)
     {
       ctype = 'I';
     }
-    else if (mfline[0] == '#')
+    else if (mfline[0] == '#' || mfline[0] == '\r' || mfline[0] == '\n' || mfline[0] == 0)
     {
+      /* Ignore comments and blank lines! */
     }
     else if (startsame_(mfline,"NUM="))
     {
@@ -126,6 +127,56 @@ int ParseMenuFile(FILE *mf)
     }
     else
     {
+      switch (ctype)
+      {
+        case 0:
+         /* Ignore anything written before the first section */
+        break;
+        
+        case 'F':
+        {
+#ifdef HAVE_XFT
+          if (fnum < fasize)
+          {
+            long fid = 0;
+            unsigned long fsize = 0;
+            char fname[256] = "", fspec[300] = "";
+            sscanf(mfline, "%ld, %lu, \"%[^\"]\"", &fid, &fsize, fname);
+            sprintf(fspec, "%s-%lu", fname, fsize);
+            	printf("Font %ld = \"%s\"\n",fid,fspec);
+            fontarray[fnum].id = fid;
+            fontarray[fnum].font = XftFontOpenName(thedisplay, thescreen, fspec);
+            if (fontarray[fnum].font == NULL) printf("Failed to open font \"%s\" (size %lu)!\n",fname, fsize);
+          }
+#endif
+        }
+        break;
+        
+        case 'M':
+        {
+          if (wnum<wasize)
+          {
+            long wid;
+            char wcapt[257] = "";
+            int wx, wy;
+            unsigned int wwidth, wheight, wbwidth;
+            sscanf(mfline, "%ld, \"%[^\"]\", %d, %d, %u, %u, %u", &wid, wcapt, &wx, &wy, &wwidth, &wheight, &wbwidth);
+            winarray[wnum].id = wid;
+            struct WinPropNode *awp;
+            awp = NewWindow(thedisplay, DefaultRootWindow(thedisplay), wcapt, wcapt, None, NULL, 0, NULL, wx, wy, wwidth, wheight, wbwidth, white, black, white);
+            if (awp != NULL)
+            {
+              winarray[wnum].win = awp->win;
+              	printf("# Made Window 0x%X\n", awp->win);
+            }
+            else winarray[wnum].win = 0;
+          }
+        }
+        break;
+        
+        case 'I':
+        break;
+      }
     }
   }
 }
