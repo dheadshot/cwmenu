@@ -3,19 +3,30 @@
 #include <X11/Xft/Xft.h>
 
 #include "xfuncs.h"
+#include "sfuncs.h"
+
 
 Display *thedisplay;
 int thescreen;
 Window mainwindow, subwindow;
+struct MenuIDRel *winarray = NULL;
+long wasize = 0;
 /* XFontStruct *xfs = NULL; */
 #ifdef HAVE_XFT
 XftFont *keenfont = NULL, *sgafont = NULL;
+struct FontIDRel *fontarray = NULL;
+long fasize = 0;
 #endif
+
+struct ItemActionRel *iactarray = NULL;
+long iaasize = 0;
 
 unsigned long black, white, green, lime;
 #ifdef HAVE_XFT
 XftColor xblack, xwhite, xgreen, xlime;
 #endif
+
+
 
 int DoListFonts()
 {
@@ -30,6 +41,16 @@ int DoListFonts()
   }
   XFreeFontNames(flist);
   return 1;
+}
+
+int ParseMenuFile(FILE *mf)
+{
+  char mfline[1024] = "";
+  char ctype = 0;
+  while ( fgets(mfline,1023,mf) != NULL)
+  {
+    
+  }
 }
 
 int init_x()

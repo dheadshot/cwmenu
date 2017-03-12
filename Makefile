@@ -11,3 +11,5 @@ main.o: main.c
 xfuncs.o: xfuncs.c
 	${CC} ${XFTFLAGS} -c xfuncs.c
 
+sfuncs.o: sfuncs.c
+	${CC} -c sfuncs.c

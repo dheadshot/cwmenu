@@ -45,6 +45,29 @@ struct ItemPropNode {
   struct ItemPropNode *next;
 };
 
+#ifdef HAVE_XFT
+struct FontIDRel {
+  unsigned long id;
+  XftFont *font;
+};
+#endif
+
+struct MenuIDRel {
+  unsigned long id;
+  Window win;
+};
+
+union ItemAction {
+  char *command;
+  unsigned long menuid;
+};
+
+struct ItemActionRel {
+  struct ItemPropNode *itemptr;
+  char type;
+  union ItemAction action;
+};
+
 
 unsigned long get_colour(char *acolour, Display *dis, int screen);
 #ifdef HAVE_XFT
