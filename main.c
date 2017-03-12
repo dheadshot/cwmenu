@@ -47,9 +47,86 @@ int ParseMenuFile(FILE *mf)
 {
   char mfline[1024] = "";
   char ctype = 0;
+  long fnum = 0, mnum = 0, inum = 0, n;
+  
   while ( fgets(mfline,1023,mf) != NULL)
   {
-    
+    if (streq_(mfline,"[FONTS]"))
+    {
+      ctype = 'F';
+    }
+    else if (streq(mfline,"[MENUS]"))
+    {
+      ctype = 'M';
+    }
+    else if (streq(mfline,"[ITEMS]"))
+    {
+      ctype = 'I';
+    }
+    else if (mfline[0] == '#')
+    {
+    }
+    else if (startsame_(mfline,"NUM="))
+    {
+      switch (ctype)
+      {
+        case 'F':
+#ifdef HAVE_XFT
+          if (fasize >0)
+          {
+            /* Free each font, then... */
+            free(fontarray);
+            fontarray = NULL;
+            fasize = 0;
+          }
+          else fontarray = NULL;
+          fasize=atol(mfline+4);
+          if (fasize>0) fontarray = (struct FontIDRel *) malloc(sizeof(struct FontIDRel)*fasize);
+          if (fontarray == NULL) fasize = 0;
+          if (fasize > 0) memset(fontarray, 0, fasize*sizeof(struct FontIDRel));
+#endif
+        break;
+        
+        case 'M':
+          if (wasize >0)
+          {
+            /* Free each menu, then... */
+            free(winarray);
+            winarray = NULL;
+            wasize = 0;
+          }
+          else winarray = NULL;
+          wasize=atol(mfline+4);
+          if (wasize>0) winarray = (struct MenuIDRel *) malloc(sizeof(struct MenuIDRel)*wasize);
+          if (winarray == NULL) wasize = 0;
+          if (wasize > 0) memset(winarray, 0, wasize*sizeof(struct MenuIDRel));
+        break;
+        
+        case 'I':
+          if (iaasize >0)
+          {
+            for (n=0;n<iaasize;n++)
+            {
+              if (iactarray[n].type == 'C' || iactarray[n].type == 'c')
+              {
+                free(iactarray[n].action.command);
+              }
+            } /* Free each Action, then... */
+            free(iactarray);
+            iactarray = NULL;
+            iaasize = 0;
+          }
+          else iactarray = NULL;
+          iaasize=atol(mfline+4);
+          if (iaasize>0) iactarray = (struct ItemActionRel *) malloc(sizeof(struct ItemActionRel)*iaasize);
+          if (iactarray == NULL) iaasize = 0;
+          if (iaasize > 0) memset(iactarray, 0, iaasize*sizeof(struct ItemActionRel));
+        break;
+      }
+    }
+    else
+    {
+    }
   }
 }
 
