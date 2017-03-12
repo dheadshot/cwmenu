@@ -1,0 +1,30 @@
+[FONTS]
+NUM=2
+# Format:
+# FontID, FontSize, "FontName"
+1, 12, "Keen 4 Menu Font"
+2, 12, "SGA K3 Direct"
+
+[MENUS]
+NUM=2
+# Format:
+# MenuID, "Caption", X, Y, Width, Height, BorderWidth
+1, "CompuWrist Main Menu", 0, 0, 300, 200, 5
+2, "CompuWrist Sub Menu", 0, 0, 300, 200, 5
+
+[ITEMS]
+NUM=7
+# Format:
+# MenuID, ItemMenuHandle, FontID, "Caption", Type, Action
+# Types:
+#   M = Submenu - Action is Submenu Number
+#   C = Command - Action is "Command"
+#   N = None (label) - Action is '-'
+1, 1, 1, "MENU ITEM 1", N, -
+1, 2, 2, "SGA Menu Item", N, -
+1, 3, 1, "Launch Sub-Menu", M, 2
+2, 1, 1, "SUBMENU ITEM 1", N, -
+2, 4, 2, "SGA SubMenu Item", N, -
+2, 5, 1, "Submenu Item 5", N, -
+2, 6, 1, "Echo Action...", C, "echo 'Hi!'"
+
