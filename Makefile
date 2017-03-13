@@ -1,8 +1,8 @@
 CC = gcc
 XFTFLAGS = -DHAVE_XFT
 
-cwmenu: main.o xfuncs.o
-	${CC} ${XFTFLAGS} main.o xfuncs.o -lX11 -lXft -o cwmenu
+cwmenu: main.o xfuncs.o sfuncs.o
+	${CC} ${XFTFLAGS} main.o xfuncs.o sfuncs.o -lX11 -lXft -o cwmenu
 	chmod +x cwmenu
 
 main.o: main.c
