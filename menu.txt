@@ -18,6 +18,7 @@ NUM=2
 NUM=2
 # Format:
 # MenuID, "Caption", X, Y, Width, Height, BorderWidth
+# Lowest MenuID is Main Menu!
 1, "CompuWrist Main Menu", 0, 0, 300, 200, 5
 2, "CompuWrist Sub Menu", 0, 0, 300, 200, 5
 
