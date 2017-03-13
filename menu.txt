@@ -29,6 +29,8 @@ NUM=7
 # MenuID, ItemMenuHandle, FontID, "Caption", Type, Action
 # Types:
 #   M = Submenu - Action is Submenu Number
+#   B = Back (close the submenu; won't work on root menu) - Action is '-' # NOT IMPLEMENTED YET
+#   X = eXit (End the program) - Action is '-' # NOT IMPLEMENTED YET
 #   C = Command - Action is "Command"
 #   N = None (label) - Action is '-'
 1, 1, 1, "MENU ITEM 1", N, -
