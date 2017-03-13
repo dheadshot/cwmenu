@@ -33,3 +33,9 @@ int startsame_(char *a, char *b)
   return 0;
 }
 
+void strltrim(char *ostr, char *istr)
+{
+  long n;
+  for (n=0;istr[n]!=0;n++) if (istr[n] != ' ') break;
+  strcpy(ostr, istr+n);
+}

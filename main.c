@@ -55,11 +55,11 @@ int ParseMenuFile(FILE *mf)
     {
       ctype = 'F';
     }
-    else if (streq(mfline,"[MENUS]"))
+    else if (streq_(mfline,"[MENUS]"))
     {
       ctype = 'M';
     }
-    else if (streq(mfline,"[ITEMS]"))
+    else if (streq_(mfline,"[ITEMS]"))
     {
       ctype = 'I';
     }
@@ -75,7 +75,10 @@ int ParseMenuFile(FILE *mf)
 #ifdef HAVE_XFT
           if (fasize >0)
           {
-            /* Free each font, then... */
+            for (n=0;n<fasize;n++)
+            {
+              if (fontarray[n].font != NULL) XftFontClose(thedisplay, fontarray[n].font);
+            } /* Free each font, then... */
             free(fontarray);
             fontarray = NULL;
             fasize = 0;
@@ -91,7 +94,10 @@ int ParseMenuFile(FILE *mf)
         case 'M':
           if (wasize >0)
           {
-            /* Free each menu, then... */
+            for (n=0;n<wasize;n++)
+            {
+              if (winarray[n].win != 0) FreeWindow(winarray[n].win);
+            } /* Free each menu, then... */
             free(winarray);
             winarray = NULL;
             wasize = 0;
@@ -110,7 +116,7 @@ int ParseMenuFile(FILE *mf)
             {
               if (iactarray[n].type == 'C' || iactarray[n].type == 'c')
               {
-                free(iactarray[n].action.command);
+                if (iactarray[n].action.command != NULL) free(iactarray[n].action.command);
               }
             } /* Free each Action, then... */
             free(iactarray);
@@ -138,47 +144,204 @@ int ParseMenuFile(FILE *mf)
 #ifdef HAVE_XFT
           if (fnum < fasize)
           {
-            long fid = 0;
+            unsigned long fid = 0;
             unsigned long fsize = 0;
             char fname[256] = "", fspec[300] = "";
-            sscanf(mfline, "%ld, %lu, \"%[^\"]\"", &fid, &fsize, fname);
+            sscanf(mfline, "%lu, %lu, \"%[^\"]\"", &fid, &fsize, fname);
             sprintf(fspec, "%s-%lu", fname, fsize);
             	printf("Font %ld = \"%s\"\n",fid,fspec);
             fontarray[fnum].id = fid;
             fontarray[fnum].font = XftFontOpenName(thedisplay, thescreen, fspec);
             if (fontarray[fnum].font == NULL) printf("Failed to open font \"%s\" (size %lu)!\n",fname, fsize);
           }
+          fnum++;
 #endif
         }
         break;
         
         case 'M':
         {
-          if (wnum<wasize)
+          if (mnum<wasize)
           {
-            long wid;
+            unsigned long wid;
             char wcapt[257] = "";
             int wx, wy;
             unsigned int wwidth, wheight, wbwidth;
-            sscanf(mfline, "%ld, \"%[^\"]\", %d, %d, %u, %u, %u", &wid, wcapt, &wx, &wy, &wwidth, &wheight, &wbwidth);
-            winarray[wnum].id = wid;
+            sscanf(mfline, "%lu, \"%[^\"]\", %d, %d, %u, %u, %u", &wid, wcapt, &wx, &wy, &wwidth, &wheight, &wbwidth);
+            winarray[mnum].id = wid;
+            winarray[mnum].curiy = 0;
             struct WinPropNode *awp;
             awp = NewWindow(thedisplay, DefaultRootWindow(thedisplay), wcapt, wcapt, None, NULL, 0, NULL, wx, wy, wwidth, wheight, wbwidth, white, black, white, 0);
             if (awp != NULL)
             {
-              winarray[wnum].win = awp->win;
+              winarray[mnum].win = awp->win;
               	printf("# Made Window 0x%X\n", awp->win);
             }
-            else winarray[wnum].win = 0;
+            else winarray[mnum].win = 0;
           }
+          mnum++;
         }
         break;
         
         case 'I':
+        {
+          if (inum>=iaasize) break;
+          
+          unsigned long wid, wih, fid, iamid = 0, iapt = 0;
+          char icaption[257] = "", iacmd[1024] = "";
+          char iatype;
+          
+          sscanf(mfline, "%lu, %lu, %lu, \"%[^\"]\", %c,%n", &wid, &wih, &fid, icaption, &iapt);
+          switch (iatype)
+          {
+            case 'M':
+            case 'm':
+              iamid = atol(mfline+iapt);
+              iactarray[inum].type = 'M';
+              iactarray[inum].action.menuid = iamid;
+            break;
+            
+            case 'C':
+            case 'c':
+              strltrim(iacmd, mfline+iapt);
+              iactarray[inum].type = 'C';
+              iactarray[inum].action.command = (char *) malloc(sizeof(char)*(1+strlen(iacmd)));
+              if (iactarray[inum].action.command == NULL)
+              {
+                printf("Warning: Out of memory assigning action \"%s\"!", iacmd);
+              }
+              else strcpy(iactarray[inum].action.command,iacmd);
+            break;
+            
+            case 'N':
+            case 'n':
+              iactarray[inum].type = 'N';
+            break;
+            
+            default:
+              printf("Warning: Invalid Item Type '%c'!\n", iatype);
+            break;
+          }
+          Window awin = 0;
+#ifdef HAVE_XFT
+          XftFont *afont = NULL;
+          long m;
+#endif
+          for (n = 0; n < wasize; n++)
+          {
+            if (winarray[n].id == wid)
+            {
+              awin = winarray[n].win;
+              break;
+            }
+          }
+          if (awin == 0)
+          {
+            iactarray[inum].itemptr = NULL;
+            printf("Warning: No MenuID '%lu', cannot create item with handle '%lu:%lu'\n", wid, wid, wih);
+            inum++;
+            break;
+          }
+          m = n;
+#ifdef HAVE_XFT
+          for (n = 0; n < fasize; n++)
+          {
+            if (fontarray[n].id == fid)
+            {
+              afont = fontarray[n].font;
+              break;
+            }
+          }
+          if (afont == NULL)
+          {
+            iactarray[inum].itemptr = NULL;
+            printf("Warning: No FontID '%lu', cannot create item with handle '%lu:%lu'\n", fid, wid, wih);
+            inum++;
+            break;
+          }
+#endif
+          Window wrr;
+          int wxr, wyr;
+          unsigned int wwr,whr,wbwr,wdr, ith, itw, ity;
+          unsigned long iid;
+          XGetGeometry(thedisplay, awin, &wrr, &wxr, &wyr, &wwr, &whr, &wbwr, &wdr);
+          itw = wwr-10;
+          ith = GetXftTextHeight(thedisplay, afont, icaption)+10;
+          /* winarray[m] is window */
+          ity = winarray[m].curiy;
+          winarray[m].curiy += ith+5;
+          
+#ifdef HAVE_XFT
+          iid = CreateItem(awin,5,ity,itw,ith,&xblack,&xlime,&xgreen,afont,icaption,wih);
+#else
+          iid = CreateItem(awin,5,ity,itw,ith,black,lime,green,icaption,wih);
+#endif
+          if (iid == 0) printf("Warning: Could not create item \"%s\"!\n", icaption);
+          else iactarray[inum].itemptr = FindItemProps(iid);
+          inum++;
+        }
         break;
       }
     }
   }
+  if (!feof(mf)) return 0;
+  return 1;
+}
+
+unsigned long FindMainMenu()
+{
+  if (winarray == NULL || wasize <= 0) return 0;
+  long n;
+  unsigned long curminid = 0;
+  curminid--; /* Set to max unsigned long... */
+  for (n=0;n<wasize;n++)
+  {
+    if (winarray[n].id < curminid) curminid = winarray[n].id;
+  }
+  return curminid;
+}
+
+void FreeGeneratedArrays()
+{
+  long n;
+  
+  if (iactarray != NULL)
+  {
+    for (n=0;n<iaasize;n++)
+    {
+      if (iactarray[n].type == 'C' || iactarray[n].type == 'c')
+      {
+        if (iactarray[n].action.command != NULL) free(iactarray[n].action.command);
+      }
+    }
+    free(iactarray);
+    iactarray = NULL;
+    iaasize = 0;
+  }
+  
+  if (winarray != NULL)
+  {
+    for (n=0;n<wasize;n++)
+    {
+      if (winarray[n].win != 0) FreeWindow(winarray[n].win);
+    }
+    free(winarray);
+    winarray = NULL;
+    wasize = 0;
+  }
+  
+  if (fontarray == NULL) return;
+  for (n=0;n<fasize;n++)
+  {
+#ifdef HAVE_XFT
+    if (fontarray[n].font != NULL) XftFontClose(thedisplay, fontarray[n].font);
+#endif
+  }
+  free(fontarray);
+  fontarray = NULL;
+  fasize = 0;
+  
+  return;
 }
 
 int init_x()
@@ -273,6 +436,7 @@ void close_x()
 {
 /*  if (xfs != NULL) XFreeFont(thedisplay, xfs);  */
   FreeWindow(mainwindow);
+  FreeGeneratedArrays();
   DestroyItems();
   DestroyWins();
 #ifdef HAVE_XFT

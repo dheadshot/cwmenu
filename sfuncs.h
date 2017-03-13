@@ -3,5 +3,6 @@
 
 int streq_(char *a, char *b);
 int startsame_(char *a, char *b);
+void strltrim(char *ostr, char *istr);
 
 #endif

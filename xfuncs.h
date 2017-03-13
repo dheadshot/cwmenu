@@ -26,8 +26,8 @@ struct WinPropNode {
 };
 
 struct ItemPropNode {
-  unsigned long itemid;
-  unsigned long winitemhandle;
+  unsigned long itemid;        /* This changes if the window is destroyed and then recreated. */
+  unsigned long winitemhandle; /* Within a Window, this is always static. */
   int curx;
   int cury;
   unsigned int width;
@@ -56,6 +56,7 @@ struct FontIDRel {
 struct MenuIDRel {
   unsigned long id;
   Window win;
+  int curiy;
 };
 
 union ItemAction {
