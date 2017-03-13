@@ -213,6 +213,16 @@ int ParseMenuFile(FILE *mf)
               else strcpy(iactarray[inum].action.command,iacmd);
             break;
             
+            case 'B':
+            case 'b':
+              iactarray[inum].type = 'B';
+            break;
+            
+            case 'X':
+            case 'x':
+              iactarray[inum].type = 'X';
+            break;
+            
             case 'N':
             case 'n':
               iactarray[inum].type = 'N';
@@ -523,7 +533,64 @@ int ItemEvent(Window awin, unsigned long wih)
     {
       undosubwin();
     }
+    return 1;
   }
+  
+  struct ItemPropNode *ipn;
+  long n, i;
+  
+  ipn = FindItemWIH(awin,wih);
+  if (ipn == NULL) return 0;
+  
+  /* This shouldn't be done this way, but I've written myself into a corner... */
+  for (n=0;n<iaasize;n++)
+  {
+    if (iactarray[n].itemptr == ipn) break;
+  }
+  if (n >= iaasize) return 0;
+  /* If it's got this far, it has an iactarray entry (and thus the menu file has been parsed).  Hurray! */
+  if (iactarray[n].type == 'N' || iactarray[n].type == 'n') return 1; /* If it's not meant to do anything, don't do anything! */
+  if (iactarray[n].type == 'M' || iactarray[n].type == 'm')
+  {
+    /* It's a menu! */
+    for (i=0;i<wasize;i++)
+    {
+      if (winarray[i].id == iactarray[n].action.menuid) break;
+    }
+    if (i>=wasize) return 0; /* No matches.  Boo! */
+    ChangeWindowVisibility(winarray[i].win, 1); /* Make it visible */
+    return 1;
+  }
+  if (iactarray[n].type == 'C' || iactarray[n].type == 'c')
+  {
+    /* It's a Command! */
+    /* For the time being, use system(), but I really ought to make this launch a subprocess... */
+    if (iactarray[n].action.command != NULL) system(iactarray[n].action.command);
+    return 1;
+  }
+  if (iactarray[n].type == 'B' || iactarray[n].type == 'b')
+  {
+    /* It means "Go Back" (Unless in Main Menu). */
+    unsigned long mmid = FindMainMenu();
+    if (mmid == 0) return 0;
+    for (i = 0; i < wasize; i++)
+    {
+      if (winarray[i].id == mmid) break;
+    }
+    if (i>=wasize) return 0;
+    if (winarray[i].win == awin) return 1; /* Don't hide the main menu! */
+    ChangeWindowVisibility(awin, 0); /* Hide this menu */
+    return 1;
+  }
+  if (iactarray[n].type == 'X' || iactarray[n].type == 'x')
+  {
+    /* Exit the Program! */
+    	printf("# Closing...");
+    close_x();
+    return 1;
+  }
+  /* Unknown Action! */
+  return 0;
 }
 
 int main(int argc, char *argv[])
