@@ -6,6 +6,8 @@
 #include "sfuncs.h"
 
 
+char versionstr[] = "0.01.00";
+
 Display *thedisplay;
 int thescreen;
 Window mainwindow, subwindow;
@@ -51,17 +53,22 @@ int ParseMenuFile(FILE *mf)
   
   while ( fgets(mfline,1023,mf) != NULL)
   {
+    if (mfline[strlen(mfline)-1] == '\n') mfline[strlen(mfline)-1] = 0;
+    if (mfline[strlen(mfline)-1] == '\r') mfline[strlen(mfline)-1] = 0;
     if (streq_(mfline,"[FONTS]"))
     {
       ctype = 'F';
+      	printf("# In Fonts\n");
     }
     else if (streq_(mfline,"[MENUS]"))
     {
       ctype = 'M';
+      	printf("# In Menus\n");
     }
     else if (streq_(mfline,"[ITEMS]"))
     {
       ctype = 'I';
+      	printf("# In Items\n");
     }
     else if (mfline[0] == '#' || mfline[0] == '\r' || mfline[0] == '\n' || mfline[0] == 0)
     {
@@ -88,6 +95,7 @@ int ParseMenuFile(FILE *mf)
           if (fasize>0) fontarray = (struct FontIDRel *) malloc(sizeof(struct FontIDRel)*fasize);
           if (fontarray == NULL) fasize = 0;
           if (fasize > 0) memset(fontarray, 0, fasize*sizeof(struct FontIDRel));
+          	printf("# %ld Fonts\n", fasize);
 #endif
         break;
         
@@ -107,6 +115,7 @@ int ParseMenuFile(FILE *mf)
           if (wasize>0) winarray = (struct MenuIDRel *) malloc(sizeof(struct MenuIDRel)*wasize);
           if (winarray == NULL) wasize = 0;
           if (wasize > 0) memset(winarray, 0, wasize*sizeof(struct MenuIDRel));
+          	printf("# %ld Menus\n", wasize);
         break;
         
         case 'I':
@@ -128,6 +137,7 @@ int ParseMenuFile(FILE *mf)
           if (iaasize>0) iactarray = (struct ItemActionRel *) malloc(sizeof(struct ItemActionRel)*iaasize);
           if (iactarray == NULL) iaasize = 0;
           if (iaasize > 0) memset(iactarray, 0, iaasize*sizeof(struct ItemActionRel));
+          	printf("# %ld Items\n", iaasize);
         break;
       }
     }
@@ -137,6 +147,7 @@ int ParseMenuFile(FILE *mf)
       {
         case 0:
          /* Ignore anything written before the first section */
+         	printf("# Ignoring '%s'\n",mfline);
         break;
         
         case 'F':
@@ -175,7 +186,7 @@ int ParseMenuFile(FILE *mf)
             if (awp != NULL)
             {
               winarray[mnum].win = awp->win;
-              	printf("# Made Window 0x%X\n", awp->win);
+              	printf("# Made Window 0x%X (\"%s\")\n", awp->win, wcapt);
             }
             else winarray[mnum].win = 0;
           }
@@ -191,7 +202,8 @@ int ParseMenuFile(FILE *mf)
           char icaption[257] = "", iacmd[1024] = "";
           char iatype;
           
-          sscanf(mfline, "%lu, %lu, %lu, \"%[^\"]\", %c,%n", &wid, &wih, &fid, icaption, &iapt);
+          sscanf(mfline, "%lu, %lu, %lu, \"%[^\"]\", %c,%n", &wid, &wih, &fid, icaption, &iatype, &iapt);
+          	printf("# Item %lu:%lu (\"%s\") type %c rp: %lu\n", wid, wih, icaption, iatype, iapt);
           switch (iatype)
           {
             case 'M':
@@ -386,7 +398,7 @@ int init_x()
   winbordcol = black;
   winbgcol = black;
   
-  	printf("#Time to make the window!\n");
+  /*	printf("#Time to make the window!\n");
   mwprop = NewWindow(thedisplay, DefaultRootWindow(thedisplay), "CompuWrist Menu", "CompuWrist Menu", None, NULL, 0, NULL, winx, winy, winw, winh, winbord, winbordcol, winbgcol, white, 1);
   if (mwprop == NULL)
   {
@@ -396,9 +408,9 @@ int init_x()
   else
   {
     	printf("#Done that\n#Now.  Fonts...\n");
-/*    xfs = XLoadQueryFont(thedisplay,"*Keen*");
+/ *    xfs = XLoadQueryFont(thedisplay,"*Keen*");
     if (xfs == NULL) printf("Cannot find font.\n");
-    DoListFonts();*/
+    DoListFonts();* /
 #ifdef HAVE_XFT
     keenfont = XftFontOpenName(thedisplay, thescreen, "Keen 4 Menu Font-12");
     if (keenfont == NULL) printf("Cannot find Keen font.\n");
@@ -406,6 +418,7 @@ int init_x()
     if (sgafont == NULL) printf("Cannot find SGA font.\n");
 #endif
     	printf("#Fonts done!\n#Time to set up the Window...\n");
+    
     
     mainwindow = mwprop->win;
     XGetGeometry(mwprop->disp, (Drawable) mwprop->win, &rootret, &winx, &winy, &winw, &winh, &winbord, &depthret);
@@ -436,13 +449,13 @@ int init_x()
     CreateItem(mainwindow,itx,ity,itw,ith,black,lime,green,"Menu Item 3", 3);
 #endif
     DrawItems(mainwindow);
-  }
+  }*/
   
   XFlush(thedisplay);
   return ans;
 }
 
-void close_x()
+void close_x( int returnval)
 {
 /*  if (xfs != NULL) XFreeFont(thedisplay, xfs);  */
   FreeWindow(mainwindow);
@@ -458,7 +471,7 @@ void close_x()
   free_xft_colour(thedisplay, thescreen, &xlime);
 #endif
   XCloseDisplay(thedisplay);
-  exit(0);
+  exit(returnval);
 }
 
 int dosubwin()
@@ -586,7 +599,7 @@ int ItemEvent(Window awin, unsigned long wih)
   {
     /* Exit the Program! */
     	printf("# Closing...");
-    close_x();
+    close_x(0);
     return 1;
   }
   /* Unknown Action! */
@@ -595,8 +608,67 @@ int ItemEvent(Window awin, unsigned long wih)
 
 int main(int argc, char *argv[])
 {
+  char mfname[1025] = "menu.txt";
+  FILE *mf = NULL;
+  
   	printf("#It Begins...\n");
+  if ((argc==2 && (streq_(argv[1],"--help") || streq_(argv[1],"-?") || streq_(argv[1],"--version"))) || argc > 2)
+  {
+    printf("CompuWrist Menu System\nVersion %s\nUsage:\n\t%s [{ --help | -m=<menufile>}]\n", versionstr, argv[0]);
+    printf("Where:\n--help\tShows this help message\n-m=<menufile>\t(Where <menufile> is the menu file to load) runs with the following menu file.\n");
+    printf("Note that if you run %s without options, %s will look for a menu file called \"menu.txt\" in the current directory.\n",argv[0], argv[0]);
+    return 0;
+  }
+  if (argc==2 && startsame_(argv[1],"-m="))
+  {
+    if (strlen(argv[1])>1027)
+    {
+      printf("Menu file path \"%s\" too long!\n",argv[1]+3);
+      return 1;
+    }
+    strcpy(mfname,argv[1]+3);
+  }
+  
+  mf = fopen(mfname,"r");
+  if (mf == NULL)
+  {
+    printf("Error Opening File!\n");
+    return 1;
+  }
+  
   init_x();
+  
+  if (ParseMenuFile(mf) == 0)
+  {
+    printf("Error Parsing Menu File!\n");
+    close_x(1);
+  }
+  	printf("# Parsed Menu File\n");
+  fclose(mf);
+  
+  unsigned long mmid = 0;
+  long n;
+  Window mfmain;
+  mmid = FindMainMenu();
+  if (mmid == 0 || (mmid+1)==0)
+  {
+    printf("No Main Menu Found!\n");
+    close_x(1);
+  }
+  for (n=0;n<wasize;n++) if (winarray[n].id==mmid) break;
+  if (n>=wasize)
+  {
+    printf("No Main Menu Found!\n");
+    close_x(1);
+  }
+  mfmain = winarray[n].win;
+  if (mfmain == 0)
+  {
+    printf("Error loading main window!\n");
+    close_x(1);
+  }
+  ChangeWindowVisibility(mfmain,1);
+  
   	printf("#Now into the message loop...\n");
   
   XEvent event;
@@ -614,27 +686,30 @@ int main(int argc, char *argv[])
     if (event.type == Expose && event.xexpose.count == 0)
     {
       /* Redraw Window! */
-      if (event.xany.window == mainwindow)
+      struct WinPropNode *awpn = FindWinProps(event.xany.window);
+      
+      /*if (event.xany.window == mainwindow)*/
+      if (awpn != NULL)
       {
         Window rootret;
         int winx, winy;
         unsigned int winw, winh, winbord, depthret;
         
-        XGetGeometry(mwprop->disp, (Drawable) mainwindow, &rootret, &winx, &winy, &winw, &winh, &winbord, &depthret);
+        XGetGeometry(awpn->disp, (Drawable) awpn->win, &rootret, &winx, &winy, &winw, &winh, &winbord, &depthret);
         if (winw >= 200)
         {
-          ResizeItems(mainwindow, winw, 0);
+          ResizeItems(awpn->win, winw, 0);
         }
-        XSetBackground(mwprop->disp, mwprop->gc, black);
-        XClearWindow(mwprop->disp, mainwindow);
-        DrawItems(mainwindow);
+        XSetBackground(awpn->disp, awpn->gc, black);
+        XClearWindow(awpn->disp, awpn->win);
+        DrawItems(awpn->win);
       }
       XFlush(thedisplay);
     }
     
     if (event.type == KeyPress && XLookupString(&event.xkey, text, 255, &key, 0) == 1)
     {
-      if (text[0] == 'q') close_x(); /* For DEBUGGING ONLY */
+      if (text[0] == 'q') close_x(0); /* For DEBUGGING ONLY */
       else printf("The %c (%d) key was pressed\n", text[0], text[0]);
       
       if (text[0] == 13)
@@ -653,35 +728,36 @@ int main(int argc, char *argv[])
         }
       }
     }
-    else if (event.type == KeyPress && event.xkey.window == mainwindow)
+    /*else if (event.type == KeyPress && event.xkey.window == mainwindow)
     {
       unsigned long tiid;
       printf("Key press: %x\n",event.xkey.keycode);
       if (event.xkey.keycode == 0x6f || event.xkey.keycode == 0x71)
       {
-        /* UP or LEFT */
+        / * UP or LEFT * /
         tiid = mwprop->selitem;
         tiid = PrevItemInWindow(mainwindow, tiid);
         if (tiid != 0)
         {
-          /* Select item tiid */
+          / * Select item tiid * /
           mwprop->selitem = tiid;
           DrawItems(mainwindow);
         }
       }
       else if (event.xkey.keycode == 0x72 || event.xkey.keycode == 0x74)
       {
-        /* RIGHT or DOWN */
+        / * RIGHT or DOWN * /
         tiid = mwprop->selitem;
         tiid = NextItemInWindow(mainwindow, tiid);
         if (tiid != 0)
         {
-          /* Select item tiid */
+          / * Select item tiid * /
           mwprop->selitem = tiid;
           DrawItems(mainwindow);
         }
       }
     }
+    */
     else if (event.type == KeyPress ) /*&& event.xkey.window == subwindow)*/
     {
       unsigned long tiid;
@@ -747,8 +823,11 @@ int main(int argc, char *argv[])
     if (event.type == DestroyNotify || event.type == ClientMessage)
     {
       /* Closed window ? */
-      if (event.xany.window == mainwindow) close_x();
-      if (event.xany.window == subwindow) undosubwin();
+      /*if (event.xany.window == mainwindow) close_x(0);
+      if (event.xany.window == subwindow) undosubwin();*/
+      if (event.xany.window == mfmain) close_x(0);
+      else ChangeWindowVisibility(event.xany.window, 0);
+      /* Hide other windows on close! */
     }
   }
   return 1;
