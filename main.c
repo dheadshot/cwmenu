@@ -4,6 +4,7 @@
 
 #include "xfuncs.h"
 #include "sfuncs.h"
+#include "execs.h"
 
 
 char versionstr[] = "0.01.00";
@@ -578,7 +579,8 @@ int ItemEvent(Window awin, unsigned long wih)
   {
     /* It's a Command! */
     /* For the time being, use system(), but I really ought to make this launch a subprocess... */
-    if (iactarray[n].action.command != NULL) system(iactarray[n].action.command);
+    /*if (iactarray[n].action.command != NULL) system(iactarray[n].action.command);*/
+    if (iactarray[n].action.command != NULL) runcommand(iactarray[n].action.command, 1);
     return 1;
   }
   if (iactarray[n].type == 'B' || iactarray[n].type == 'b')
