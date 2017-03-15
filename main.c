@@ -24,9 +24,9 @@ long fasize = 0;
 struct ItemActionRel *iactarray = NULL;
 long iaasize = 0;
 
-unsigned long black, white, green, lime;
+unsigned long black, white, green, lime, grey;
 #ifdef HAVE_XFT
-XftColor xblack, xwhite, xgreen, xlime;
+XftColor xblack, xwhite, xgreen, xlime, xgrey;
 #endif
 
 
@@ -389,16 +389,19 @@ int init_x()
   white = WhitePixel(thedisplay, thescreen);
   lime = get_colour("green", thedisplay, thescreen);
   green = get_colour("dark green", thedisplay, thescreen);
+  grey = get_colour("grey40", thedisplay, thescreen);
   	printf("#Up to here\n#Then...\n");
 #ifdef HAVE_XFT
   get_xft_colour(&xblack, 0,0,0,0xffff, thedisplay, thescreen);
   	printf("#Made xblack\n");
   get_xft_colour(&xwhite, 0xffff,0xffff,0xffff,0xffff, thedisplay, thescreen);
   	printf("#Made xwhite\n");
-  get_xft_colour(&xgreen, 0,0x8888,0,0xffff, thedisplay, thescreen);
+  get_xft_colour(&xgreen, 0,0xAAAA,0,0xffff, thedisplay, thescreen);
   	printf("#Made xgreen\n");
-  get_xft_colour(&xlime, 0,0xffff,0,0xffff, thedisplay, thescreen);
+  get_xft_colour(&xlime, 0x5555,0xffff,0x5555,0xffff, thedisplay, thescreen);
   	printf("#Made xlime\n");
+  get_xft_colour(&xgrey, 0x5555,0x5555,0x5555,0xffff, thedisplay, thescreen);
+  	printf("#Made xgrey\n");
   /* Remember to free these at the end! */
 #endif
   
@@ -465,7 +468,7 @@ int init_x()
 void close_x( int returnval)
 {
 /*  if (xfs != NULL) XFreeFont(thedisplay, xfs);  */
-  FreeWindow(mainwindow);
+  FreeWindow(mainwindow); /* Don't think I need this line either... */
   FreeGeneratedArrays();
   DestroyItems();
   DestroyWins();
@@ -476,6 +479,7 @@ void close_x( int returnval)
   free_xft_colour(thedisplay, thescreen, &xwhite);
   free_xft_colour(thedisplay, thescreen, &xgreen);
   free_xft_colour(thedisplay, thescreen, &xlime);
+  free_xft_colour(thedisplay, thescreen, &xgrey);
 #endif
   clean_pwnlist();
   XCloseDisplay(thedisplay);
@@ -585,8 +589,7 @@ int ItemEvent(Window awin, unsigned long wih)
   if (iactarray[n].type == 'C' || iactarray[n].type == 'c')
   {
     /* It's a Command! */
-    /* For the time being, use system(), but I really ought to make this launch a subprocess... */
-    /*if (iactarray[n].action.command != NULL) system(iactarray[n].action.command);*/
+    /* Should this run asynchronously?  If so, change the 1 to a 0. */
     if (iactarray[n].action.command != NULL) runcommand(iactarray[n].action.command, 1);
     return 1;
   }
