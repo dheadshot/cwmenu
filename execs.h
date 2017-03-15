@@ -13,5 +13,6 @@ char **splitargsintontsa(char *args);
 int runcommand(char *cmdline, int waitforcmd);
 ProcWaitNode *AddPWN(pid_t pid);
 int CleanPIDs();
+void clean_pwnlist();
 
 #endif

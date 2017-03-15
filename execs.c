@@ -236,3 +236,16 @@ int CleanPIDs()
   }
   return 1;
 }
+
+void clean_pwnlist()
+{
+  int status;
+  while (pwnroot != NULL)
+  {
+    waitpid(pwnroot->pid,&status,WNOHANG); /* Clear if possible */
+    pwnptr = pwnroot->next;
+    free(pwnroot);
+    pwnroot = pwnptr;
+  }
+  
+}

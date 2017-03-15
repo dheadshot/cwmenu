@@ -471,6 +471,7 @@ void close_x( int returnval)
   free_xft_colour(thedisplay, thescreen, &xgreen);
   free_xft_colour(thedisplay, thescreen, &xlime);
 #endif
+  clean_pwnlist();
   XCloseDisplay(thedisplay);
   exit(returnval);
 }
