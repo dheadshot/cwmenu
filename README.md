@@ -9,3 +9,4 @@ This is basically how the menus look so far (in TinyCore Linux - Debian will hav
 ## TODO
 - [X] Make it use a form of exec for item action commands rather than the "system" command, that clearly isn't reliable (and has to wait for a response too).
 - [ ] Some kind of digital clock?
+- [ ] Decide whether to have the menu system wait for item action commands to complete or not.
