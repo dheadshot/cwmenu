@@ -30,7 +30,7 @@ XftColor xblack, xwhite, xgreen, xlime;
 #endif
 
 
-
+/* Don't need this anymore! * /
 int DoListFonts()
 {
   char **flist = NULL;
@@ -44,7 +44,7 @@ int DoListFonts()
   }
   XFreeFontNames(flist);
   return 1;
-}
+}*/
 
 int ParseMenuFile(FILE *mf)
 {
