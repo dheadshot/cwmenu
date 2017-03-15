@@ -223,7 +223,13 @@ int ParseMenuFile(FILE *mf)
               {
                 printf("Warning: Out of memory assigning action \"%s\"!", iacmd);
               }
-              else strcpy(iactarray[inum].action.command,iacmd);
+              else
+              {
+                strcpy(iactarray[inum].action.command,iacmd+1);
+                unsigned long nend = strlen(iactarray[inum].action.command);
+                while (iactarray[inum].action.command[nend] != '"' && nend > 0) nend--;
+                if (nend != 0) iactarray[inum].action.command[nend] = 0;
+              }
             break;
             
             case 'B':
@@ -837,7 +843,7 @@ int main(int argc, char *argv[])
     
     if ((pidret = CleanPIDs()) != 1)
     {
-      printf("A process returned %d.\n",pidret)
+      printf("A process returned %d.\n",pidret);
     }
     
   }

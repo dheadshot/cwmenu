@@ -18,6 +18,8 @@ char **splitargsintontsa(char *args)
   unsigned long nargs = 1, i;
   int indq = 0, insq = 0, ines = 0, lws = 0;
   
+  	printf("## Args: \"%s\"\n",args);
+  
   for (i=0;args[i]!=0;i++)
   {
     switch (args[i])
@@ -126,6 +128,7 @@ char **splitargsintontsa(char *args)
             return NULL;
           }
           strcpy(ans[n],anarg);
+          	printf("## arg[%lu]=\"%s\"\n",n,ans[n]);
           n++;
           j = 0;
         }
@@ -145,10 +148,28 @@ char **splitargsintontsa(char *args)
       default:
         ines = 0;
         lws = 0;
+        anarg[j] = args[i];
+        j++;
       break;
     }
   }
   
+  anarg[j] = 0;
+  ans[n] = (char *) malloc(sizeof(char)*(j+1));
+  if (ans[n] == NULL)
+  {
+    /* Erk!  Free everything! */
+    for (j=0;j<n;j++)
+    {
+      free(ans[j]);
+    }
+    free(ans);
+    return NULL;
+  }
+  strcpy(ans[n],anarg);
+  printf("## arg[%lu]=\"%s\"\n",n,ans[n]);
+  
+  ans[nargs] = (char *) NULL;
   return ans;
 }
 
