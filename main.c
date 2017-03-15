@@ -710,7 +710,7 @@ int main(int argc, char *argv[])
     if (event.type == KeyPress && XLookupString(&event.xkey, text, 255, &key, 0) == 1)
     {
       if (text[0] == 'q') close_x(0); /* For DEBUGGING ONLY */
-      else printf("The %c (%d) key was pressed\n", text[0], text[0]);
+      else printf("# The %c (%d) key was pressed\n", text[0], text[0]);
       
       if (text[0] == 13)
       {
@@ -731,7 +731,7 @@ int main(int argc, char *argv[])
     /*else if (event.type == KeyPress && event.xkey.window == mainwindow)
     {
       unsigned long tiid;
-      printf("Key press: %x\n",event.xkey.keycode);
+      printf("# Key press: %x\n",event.xkey.keycode);
       if (event.xkey.keycode == 0x6f || event.xkey.keycode == 0x71)
       {
         / * UP or LEFT * /
@@ -765,7 +765,7 @@ int main(int argc, char *argv[])
       awprop = FindWinProps(event.xkey.window);
       if (awprop != NULL)
       {
-        printf("Key press: %x\n",event.xkey.keycode);
+        printf("# Key press: %x\n",event.xkey.keycode);
         if (event.xkey.keycode == 0x6f || event.xkey.keycode == 0x71)
         {
           /* UP or LEFT */
@@ -806,10 +806,10 @@ int main(int argc, char *argv[])
       /* Mouse Clicked */
       ClickItem(event.xbutton.window, event.xbutton.x, event.xbutton.y, event.xbutton.button, 0);
       lastitemclicked = Getitemclicked();
-      printf("Clicked item %lu.\n", lastitemclicked);
+      printf("# Clicked item %lu.\n", lastitemclicked);
       lastwinclicked = GetItemWin(lastitemclicked);
       lastwihclicked = GetItemWIH(lastitemclicked);
-      printf("Clicked item %X:%lu.\n",lastwinclicked, lastwihclicked);
+      printf("# Clicked item %X:%lu.\n",lastwinclicked, lastwihclicked);
       
       ItemEvent(event.xbutton.window, lastwihclicked);
     }
@@ -829,6 +829,14 @@ int main(int argc, char *argv[])
       else ChangeWindowVisibility(event.xany.window, 0);
       /* Hide other windows on close! */
     }
+    
+    int pidret;
+    
+    if ((pidret = CleanPIDs()) != 1)
+    {
+      printf("A process returned %d.\n",pidret)
+    }
+    
   }
   return 1;
 }

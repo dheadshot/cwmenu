@@ -39,3 +39,13 @@ void strltrim(char *ostr, char *istr)
   for (n=0;istr[n]!=0;n++) if (istr[n] != ' ') break;
   strcpy(ostr, istr+n);
 }
+
+void freentsa(char **ntsa)
+{
+  unsigned long n;
+  for (n=0;ntsa[n]!=(char *)NULL;n++)
+  {
+    free(ntsa[n]);
+  }
+  free(ntsa);
+}
