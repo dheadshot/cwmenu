@@ -7,6 +7,37 @@
 # The "NUM" line MUST be present ONCE in each section to specify the number of 
 # Fonts/Menus/Items in that section!
 
+[COLOURS]
+NUM=3
+# This MUST be specified before MENUS and ITEMS, if it is at all!
+# (If it's not specified, defaults are used instead).
+# Format:
+# ColourType, Colour
+# ColourTypes:
+#   B = Background
+#   U = Unselected Foreground
+#   S = Selected Foreground
+# Colours:
+#   0 = Black
+#   1 = Navy
+#   2 = Green
+#   3 = Teal
+#   4 = Maroon
+#   5 = Magenta
+#   6 = Brown
+#   7 = Silver
+#   8 = Grey
+#   9 = Blue
+#   A = Lime
+#   B = Cyan
+#   C = Red
+#   D = Fuchsia
+#   E = Yellow
+#   F = White
+B, 0
+U, 2
+S, A
+
 [FONTS]
 NUM=2
 # Format:

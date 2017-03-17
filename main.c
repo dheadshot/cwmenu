@@ -24,9 +24,13 @@ long fasize = 0;
 struct ItemActionRel *iactarray = NULL;
 long iaasize = 0;
 
-unsigned long black, white, green, lime, grey;
+unsigned long black, white, green, lime, grey, silver, red, maroon, blue, navy,
+              yellow, brown, cyan, teal, magenta, fuchsia;
+unsigned long setbgcol, setselcol, setunselcol;
 #ifdef HAVE_XFT
-XftColor xblack, xwhite, xgreen, xlime, xgrey;
+XftColor xblack, xwhite, xgreen, xlime, xgrey, xsilver, xred, xmaroon, xblue,
+         xnavy, xyellow, xbrown, xcyan, xteal, xmagenta, xfuchsia;
+XftColor *setxbgcol, *setxselcol, *setxunselcol;
 #endif
 
 
@@ -56,7 +60,12 @@ int ParseMenuFile(FILE *mf)
   {
     if (mfline[strlen(mfline)-1] == '\n') mfline[strlen(mfline)-1] = 0;
     if (mfline[strlen(mfline)-1] == '\r') mfline[strlen(mfline)-1] = 0;
-    if (streq_(mfline,"[FONTS]"))
+    if (streq_(mfline,"[COLOURS]") || streq_(mfline,"[COLORS]"))
+    {
+      ctype = 'C';
+      	printf("# In Colours\n");
+    }
+    else if (streq_(mfline,"[FONTS]"))
     {
       ctype = 'F';
       	printf("# In Fonts\n");
@@ -79,6 +88,10 @@ int ParseMenuFile(FILE *mf)
     {
       switch (ctype)
       {
+        case 'C':
+          if (atol(mfline+4) >3) printf("Warning: Only 3 colours should be specified!");
+        break;
+        
         case 'F':
 #ifdef HAVE_XFT
           if (fasize >0)
@@ -151,6 +164,173 @@ int ParseMenuFile(FILE *mf)
          	printf("# Ignoring '%s'\n",mfline);
         break;
         
+        case 'C':
+        {
+          char coltype, col;
+          unsigned long pickedcol = black;
+#ifdef HAVE_XFT
+          XftColor *pickedxcol = &xblack;
+#endif
+          sscanf(mfline, "%c, %c", &coltype, &col);
+          
+          switch (col)
+          {
+            case '0':
+              pickedcol = black;
+#ifdef HAVE_XFT
+              pickedxcol = &xblack;
+#endif
+            break;
+            
+            case '1':
+              pickedcol = navy;
+#ifdef HAVE_XFT
+              pickedxcol = &xnavy;
+#endif
+            break;
+            
+            case '2':
+              pickedcol = green;
+#ifdef HAVE_XFT
+              pickedxcol = &xgreen;
+#endif
+            break;
+            
+            case '3':
+              pickedcol = teal;
+#ifdef HAVE_XFT
+              pickedxcol = &xteal;
+#endif
+            break;
+            
+            case '4':
+              pickedcol = maroon;
+#ifdef HAVE_XFT
+              pickedxcol = &xmaroon;
+#endif
+            break;
+            
+            case '5':
+              pickedcol = magenta;
+#ifdef HAVE_XFT
+              pickedxcol = &xmagenta;
+#endif
+            break;
+            
+            case '6':
+              pickedcol = brown;
+#ifdef HAVE_XFT
+              pickedxcol = &xbrown;
+#endif
+            break;
+            
+            case '7':
+              pickedcol = silver;
+#ifdef HAVE_XFT
+              pickedxcol = &xsilver;
+#endif
+            break;
+            
+            case '8':
+              pickedcol = grey;
+#ifdef HAVE_XFT
+              pickedxcol = &xgrey;
+#endif
+            break;
+            
+            case '9':
+              pickedcol = blue;
+#ifdef HAVE_XFT
+              pickedxcol = &xblue;
+#endif
+            break;
+            
+            case 'A':
+            case 'a':
+              pickedcol = lime;
+#ifdef HAVE_XFT
+              pickedxcol = &xlime;
+#endif
+            break;
+            
+            case 'B':
+            case 'b':
+              pickedcol = cyan;
+#ifdef HAVE_XFT
+              pickedxcol = &xcyan;
+#endif
+            break;
+            
+            case 'C':
+            case 'c':
+              pickedcol = red;
+#ifdef HAVE_XFT
+              pickedxcol = &xred;
+#endif
+            break;
+            
+            case 'D':
+            case 'd':
+              pickedcol = fuchsia;
+#ifdef HAVE_XFT
+              pickedxcol = &xfuchsia;
+#endif
+            break;
+            
+            case 'E':
+            case 'e':
+              pickedcol = yellow;
+#ifdef HAVE_XFT
+              pickedxcol = &xyellow;
+#endif
+            break;
+            
+            case 'F':
+            case 'f':
+              pickedcol = white;
+#ifdef HAVE_XFT
+              pickedxcol = &xwhite;
+#endif
+            break;
+            
+            default:
+              printf("Warning: Unknown colour \"%c\" - using black!\n",col);
+            break;
+          }
+          
+          switch (coltype)
+          {
+            case 'B':
+            case 'b':
+              setbgcol = pickedcol;
+#ifdef HAVE_XFT
+              setxbgcol = pickedxcol;
+#endif
+            break;
+            
+            case 'U':
+            case 'u':
+              setunselcol = pickedcol;
+#ifdef HAVE_XFT
+              setxunselcol = pickedxcol;
+#endif
+            break;
+            
+            case 'S':
+            case 's':
+              setselcol = pickedcol;
+#ifdef HAVE_XFT
+              setxselcol = pickedxcol;
+#endif
+            break;
+            
+            default:
+              printf("Warning: Unknown colour type \"%s\".  Ignoring this line!\n",coltype);
+            break;
+          }
+        }
+        break;
+        
         case 'F':
         {
 #ifdef HAVE_XFT
@@ -161,7 +341,7 @@ int ParseMenuFile(FILE *mf)
             char fname[256] = "", fspec[300] = "";
             sscanf(mfline, "%lu, %lu, \"%[^\"]\"", &fid, &fsize, fname);
             sprintf(fspec, "%s-%lu", fname, fsize);
-            	printf("Font %ld = \"%s\"\n",fid,fspec);
+            	printf("# Font %ld = \"%s\"\n",fid,fspec);
             fontarray[fnum].id = fid;
             fontarray[fnum].font = XftFontOpenName(thedisplay, thescreen, fspec);
             if (fontarray[fnum].font == NULL) printf("Failed to open font \"%s\" (size %lu)!\n",fname, fsize);
@@ -183,7 +363,7 @@ int ParseMenuFile(FILE *mf)
             winarray[mnum].id = wid;
             winarray[mnum].curiy = 0;
             struct WinPropNode *awp;
-            awp = NewWindow(thedisplay, DefaultRootWindow(thedisplay), wcapt, wcapt, None, NULL, 0, NULL, wx, wy, wwidth, wheight, wbwidth, white, black, white, 0);
+            awp = NewWindow(thedisplay, DefaultRootWindow(thedisplay), wcapt, wcapt, None, NULL, 0, NULL, wx, wy, wwidth, wheight, wbwidth, white, setbgcol, setunselcol, 0);
             if (awp != NULL)
             {
               winarray[mnum].win = awp->win;
@@ -301,9 +481,9 @@ int ParseMenuFile(FILE *mf)
           winarray[m].curiy += ith+5;
           
 #ifdef HAVE_XFT
-          iid = CreateItem(awin,5,ity,itw,ith,&xblack,&xlime,&xgreen,afont,icaption,wih);
+          iid = CreateItem(awin,5,ity,itw,ith,setxbgcol,setxselcol,setxunselcol,afont,icaption,wih);
 #else
-          iid = CreateItem(awin,5,ity,itw,ith,black,lime,green,icaption,wih);
+          iid = CreateItem(awin,5,ity,itw,ith,setbgcol,setselcol,setunselcol,icaption,wih);
 #endif
           if (iid == 0) printf("Warning: Could not create item \"%s\"!\n", icaption);
           else iactarray[inum].itemptr = FindItemProps(iid);
@@ -390,6 +570,17 @@ int init_x()
   lime = get_colour("green", thedisplay, thescreen);
   green = get_colour("dark green", thedisplay, thescreen);
   grey = get_colour("grey40", thedisplay, thescreen);
+  silver = get_colour("grey75", thedisplay, thescreen);
+  red = get_colour("red", thedisplay, thescreen);
+  maroon = get_colour("dark red", thedisplay, thescreen);
+  blue = get_colour("blue", thedisplay, thescreen);
+  navy = get_colour("dark blue", thedisplay, thescreen);
+  yellow = get_colour("yellow", thedisplay, thescreen);
+  brown = get_colour("yellow4", thedisplay, thescreen);
+  cyan = get_colour("cyan", thedisplay, thescreen);
+  teal = get_colour("dark cyan", thedisplay, thescreen);
+  fuchsia = get_colour("magenta", thedisplay, thescreen);
+  magenta = get_colour("dark magenta", thedisplay, thescreen);
   	printf("#Up to here\n#Then...\n");
 #ifdef HAVE_XFT
   get_xft_colour(&xblack, 0,0,0,0xffff, thedisplay, thescreen);
@@ -402,9 +593,39 @@ int init_x()
   	printf("#Made xlime\n");
   get_xft_colour(&xgrey, 0x5555,0x5555,0x5555,0xffff, thedisplay, thescreen);
   	printf("#Made xgrey\n");
+  get_xft_colour(&xsilver, 0xAAAA,0xAAAA,0xAAAA,0xffff, thedisplay, thescreen);
+  	printf("#Made xsilver\n");
+  get_xft_colour(&xred, 0xFFFF,0x5555,0x5555,0xffff, thedisplay, thescreen);
+  	printf("#Made xred\n");
+  get_xft_colour(&xmaroon, 0xAAAA,0x0000,0x0000,0xffff, thedisplay, thescreen);
+  	printf("#Made xmaroon\n");
+  get_xft_colour(&xbrown, 0xAAAA,0x5555,0x0000,0xffff, thedisplay, thescreen);
+  	printf("#Made xbrown\n");
+  get_xft_colour(&xyellow, 0xFFFF,0xFFFF,0x5555,0xffff, thedisplay, thescreen);
+  	printf("#Made xyellow\n");
+  get_xft_colour(&xteal, 0x0000,0xAAAA,0xAAAA,0xffff, thedisplay, thescreen);
+  	printf("#Made xteal\n");
+  get_xft_colour(&xcyan, 0x5555,0xFFFF,0xFFFF,0xffff, thedisplay, thescreen);
+  	printf("#Made xcyan\n");
+  get_xft_colour(&xnavy, 0x0000,0x0000,0xAAAA,0xffff, thedisplay, thescreen);
+  	printf("#Made xnavy\n");
+  get_xft_colour(&xblue, 0x5555,0x5555,0xFFFF,0xffff, thedisplay, thescreen);
+  	printf("#Made xblue\n");
+  get_xft_colour(&xmagenta, 0xAAAA,0x0000,0xAAAA,0xffff, thedisplay, thescreen);
+  	printf("#Made xmagenta\n");
+  get_xft_colour(&xfuchsia, 0xFFFF,0x5555,0xFFFF,0xffff, thedisplay, thescreen);
+  	printf("#Made xfuchsia\n");
   /* Remember to free these at the end! */
 #endif
   
+  setbgcol = black;
+  setselcol = lime;
+  setunselcol = green;
+#ifdef HAVE_XFT
+  setxbgcol = &xblack;
+  setxselcol = &xlime;
+  setxunselcol = &xgreen;
+#endif
   winbordcol = black;
   winbgcol = black;
   
@@ -480,6 +701,17 @@ void close_x( int returnval)
   free_xft_colour(thedisplay, thescreen, &xgreen);
   free_xft_colour(thedisplay, thescreen, &xlime);
   free_xft_colour(thedisplay, thescreen, &xgrey);
+  free_xft_colour(thedisplay, thescreen, &xsilver);
+  free_xft_colour(thedisplay, thescreen, &xred);
+  free_xft_colour(thedisplay, thescreen, &xmaroon);
+  free_xft_colour(thedisplay, thescreen, &xbrown);
+  free_xft_colour(thedisplay, thescreen, &xyellow);
+  free_xft_colour(thedisplay, thescreen, &xteal);
+  free_xft_colour(thedisplay, thescreen, &xcyan);
+  free_xft_colour(thedisplay, thescreen, &xnavy);
+  free_xft_colour(thedisplay, thescreen, &xblue);
+  free_xft_colour(thedisplay, thescreen, &xmagenta);
+  free_xft_colour(thedisplay, thescreen, &xfuchsia);
 #endif
   clean_pwnlist();
   XCloseDisplay(thedisplay);
