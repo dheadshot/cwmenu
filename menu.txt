@@ -34,7 +34,7 @@ NUM=3
 #   D = Fuchsia
 #   E = Yellow
 #   F = White
-B, 0
+B, 8
 U, 2
 S, A
 

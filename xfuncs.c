@@ -191,11 +191,19 @@ struct WinPropNode *FindWinProps(Window awin)
   return winsptr;
 }
 
+#ifdef HAVE_XFT
+struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption, 
+  char *iconcaption, Pixmap icon, char **argv, int argc, XSizeHints *hints, 
+  int x, int y, unsigned int width, unsigned int height, 
+  unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
+  unsigned long fgcol, XftColor *xbgcol, int visible)
+#else
 struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption, 
   char *iconcaption, Pixmap icon, char **argv, int argc, XSizeHints *hints, 
   int x, int y, unsigned int width, unsigned int height, 
   unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
   unsigned long fgcol, int visible)
+#endif
 {
   if (winsroot == NULL)
   {
@@ -216,6 +224,9 @@ struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption,
   winsptr->selitem = 0;
   winsptr->disp = disp;
   winsptr->parent = parent;
+#ifdef HAVE_XFT
+  winsptr->xbgcol = xbgcol;
+#endif
   winsptr->visible = visible;
   winsptr->win = XCreateSimpleWindow(disp, parent, x, y, width, height, borderwidth, bordercol, bgcol);
   XSetStandardProperties(disp, winsptr->win, caption, iconcaption, icon, argv, argc, hints);
@@ -337,7 +348,6 @@ int DrawItem(unsigned long itemid)
   if (FindItemProps(itemid) == NULL) return 0;
   if (FindWinProps(itemsptr->win) == NULL) return 0;
   
-  //d=win
 #ifdef HAVE_XFT
   XftDrawRect(winsptr->xftdc, itemsptr->xftbgcolour, itemsptr->curx, itemsptr->cury, itemsptr->width, itemsptr->height);
 #else
@@ -479,14 +489,22 @@ int DrawItems(Window awin)
   
   if (FindWinProps(awin) == NULL) return 0;
   
+  XGetGeometry(winsptr->disp, (Drawable) awin, &rootret, &winx, &winy, &winw, &winh, &winbw, &windepth);
   XClearWindow(winsptr->disp, awin);
+#ifdef HAVE_XFT
+  XftDrawRect(winsptr->xftdc, winsptr->xbgcol, 0, 0, winw, winh);
+#else
+  /* Probably don't need this * /
+  XSetForeground(winsptr->disp, winsptr->gc, itemsptr->bgcolour);
+  XFillRectangle(winsptr->disp, (Drawable) winsptr->win, winsptr->gc, itemsptr->curx, itemsptr->cury, itemsptr->width, itemsptr->height);
+  */
+#endif
   
   for (itemsptr = itemsroot; itemsptr != NULL; itemsptr = itemsptr->next)
   {
     if (itemsptr->win == awin)
     {
-      FindWinProps(awin);
-      XGetGeometry(winsptr->disp, (Drawable) awin, &rootret, &winx, &winy, &winw, &winh, &winbw, &windepth);
+      FindWinProps(awin); /* Don't think I still need this here... */
       if (itemsptr->curx <= winw && itemsptr->cury <= winh && (itemsptr->curx + itemsptr->width) >= 0 && (itemsptr->cury + itemsptr->height) >= 0)
       {
         /* Only draw if on screen */

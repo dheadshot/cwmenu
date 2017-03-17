@@ -363,7 +363,11 @@ int ParseMenuFile(FILE *mf)
             winarray[mnum].id = wid;
             winarray[mnum].curiy = 0;
             struct WinPropNode *awp;
+#ifdef HAVE_XFT
+            awp = NewWindow(thedisplay, DefaultRootWindow(thedisplay), wcapt, wcapt, None, NULL, 0, NULL, wx, wy, wwidth, wheight, wbwidth, white, setbgcol, setunselcol, setxbgcol, 0);
+#else
             awp = NewWindow(thedisplay, DefaultRootWindow(thedisplay), wcapt, wcapt, None, NULL, 0, NULL, wx, wy, wwidth, wheight, wbwidth, white, setbgcol, setunselcol, 0);
+#endif
             if (awp != NULL)
             {
               winarray[mnum].win = awp->win;
@@ -629,7 +633,7 @@ int init_x()
   winbordcol = black;
   winbgcol = black;
   
-  /*	printf("#Time to make the window!\n");
+  /*	printf("#Time to make the window!\n"); /* This won't work anymore... * /
   mwprop = NewWindow(thedisplay, DefaultRootWindow(thedisplay), "CompuWrist Menu", "CompuWrist Menu", None, NULL, 0, NULL, winx, winy, winw, winh, winbord, winbordcol, winbgcol, white, 1);
   if (mwprop == NULL)
   {
@@ -724,9 +728,13 @@ int dosubwin()
   int winx = 0, winy = 0, ans = 1;
   Window rootret;
   unsigned int winw = 300, winh = 200, winbord = 5, depthret;
-  unsigned long winbordcol, winbgcol;
+  unsigned long winbordcol = black, winbgcol = black;
   
+#ifdef HAVE_XFT
+  swprop = NewWindow(thedisplay, DefaultRootWindow(thedisplay), "CompuWrist Sub Menu", "CompuWrist Sub Menu", None, NULL, 0, NULL, winx, winy, winw, winh, winbord, winbordcol, winbgcol, white, &xblack, 1);
+#else
   swprop = NewWindow(thedisplay, DefaultRootWindow(thedisplay), "CompuWrist Sub Menu", "CompuWrist Sub Menu", None, NULL, 0, NULL, winx, winy, winw, winh, winbord, winbordcol, winbgcol, white, 1);
+#endif
   if (swprop == NULL)
   {
     printf("Error Making Window!");

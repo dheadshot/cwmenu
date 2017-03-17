@@ -18,7 +18,7 @@ struct WinPropNode {
   GC gc;
 #ifdef HAVE_XFT
   XftDraw *xftdc; /* Xft version of GC */
-  
+  XftColor *xbgcol; /* Background Colour for xftdc */
 #endif
   int visible;
   unsigned long selitem;
@@ -89,11 +89,19 @@ int GetTextDescent(Display *disp, GC agc, char *sometext);
 int GetTextHeight(Display *disp, GC agc, char *sometext);
 void DoRTrim(char *sometext);
 struct WinPropNode *FindWinProps(Window awin);
+#ifdef HAVE_XFT
+struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption, 
+  char *iconcaption, Pixmap icon, char **argv, int argc, XSizeHints *hints, 
+  int x, int y, unsigned int width, unsigned int height, 
+  unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
+  unsigned long fgcol, XftColor *xbgcol, int visible);
+#else
 struct WinPropNode *NewWindow(Display *disp, Window parent, char *caption, 
   char *iconcaption, Pixmap icon, char **argv, int argc, XSizeHints *hints, 
   int x, int y, unsigned int width, unsigned int height, 
   unsigned int borderwidth, unsigned long bordercol, unsigned long bgcol, 
   unsigned long fgcol, int visible);
+#endif
 int ChangeWindowVisibility(Window awin, int visible);
 Window GetItemWin(unsigned long itemid);
 unsigned long GetItemWIH(unsigned long itemid);
