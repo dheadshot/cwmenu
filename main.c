@@ -979,6 +979,25 @@ int main(int argc, char *argv[])
           }
         }
       }
+      else if (text[0] == 27)
+      {
+        /* Back out */
+        unsigned long mmid = FindMainMenu();
+        long wai;
+        if (mmid != 0)
+        {
+          for (wai = 0; wai < wasize; wai++)
+          {
+            if (winarray[wai].id == mmid) break;
+          }
+          if (wai<wasize && winarray[wai].win != event.xkey.window)
+          {
+            /* Don't hide the main menu! */
+            ChangeWindowVisibility(event.xkey.window, 0); /* Hide this menu */
+          }
+        }
+      }
+      
     }
     /*else if (event.type == KeyPress && event.xkey.window == mainwindow)
     {
