@@ -34,7 +34,7 @@ NUM=3
 #   D = Fuchsia
 #   E = Yellow
 #   F = White
-B, 8
+B, 0
 U, 2
 S, A
 
@@ -70,5 +70,5 @@ NUM=7
 2, 1, 1, "SUBMENU ITEM 1", N, -
 2, 4, 2, "SGA SubMenu Item", N, -
 2, 5, 1, "Submenu Item 5", N, -
-2, 6, 1, "Echo Action...", C, "echo 'Hi!'"
+2, 6, 1, "Echo Action...", C, "echo 'Hi!' $HOME"
 

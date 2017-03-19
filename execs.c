@@ -15,8 +15,8 @@ ProcWaitNode *pwnroot = NULL, *pwnptr = NULL;
 
 char **splitargsintontsa(char *args)
 {
-  unsigned long nargs = 1, i;
-  int indq = 0, insq = 0, ines = 0, lws = 0;
+  unsigned long nargs = 1, i, evn = 0;
+  int indq = 0, insq = 0, ines = 0, lws = 0, inev = 0;
   
   	printf("## Args: \"%s\"\n",args);
   
@@ -30,17 +30,30 @@ char **splitargsintontsa(char *args)
         lws = 0;
       break;
       
+      case '$':
+        if (insq == 0 && ines == 0)
+        {
+          evn++;
+        }
+        ines = 0;
+      break;
+      
       case '\'':
         if (ines == 0)
         {
           insq = 1-insq;
         }
+        else inev = 0;
         ines = 0;
         lws = 0;
       break;
       
       case '"':
-        if (insq == 0 && ines==0) indq = 1-indq;
+        if (insq == 0 && ines==0)
+        {
+          indq = 1-indq;
+        }
+        else if (insq==0) inev = 0;
         ines = 0;
         lws = 0;
       break;
@@ -48,7 +61,12 @@ char **splitargsintontsa(char *args)
       case ' ':
       case '\t':
       case '\n':
-        if (insq == 0 && indq == 0 && ines == 0 && lws == 0) nargs++;
+        if (insq == 0 && indq == 0 && ines == 0 && lws == 0)
+        {
+          nargs++;
+          inev = 0;
+        }
+        else if (insq == 0 && ines == 0 && lws == 0) inev = 0;
         ines = 0;
         lws = 1;
       break;
@@ -67,8 +85,14 @@ char **splitargsintontsa(char *args)
   char **ans = (char **) malloc(sizeof(char *)*(nargs+1));
   if (ans == NULL) return NULL;
   ans[nargs] = (char *) NULL;
-  unsigned long j = 0, n = 0;
-  char anarg[1024] = "";
+  unsigned long j = 0, n = 0, k = 0;
+  char /* anarg[1024] = ""; */ *anarg = (char *) malloc(sizeof(char)*(1+evn)*1024);
+  char *evptr = NULL, anev[1024] = "";
+  if (anarg == NULL)
+  {
+    free(ans);
+    return NULL;
+  }
   
   for (i=0;args[i]!=0;i++)
   {
@@ -85,6 +109,32 @@ char **splitargsintontsa(char *args)
         lws = 0;
       break;
       
+      case '$':
+        if (insq == 0 && ines == 0)
+        {
+          if (inev)
+          {
+            anev[k] = 0;
+            if (k == 0) evptr = getenv("$");
+            else evptr = getenv(anev);
+            if (evptr != NULL)
+            {
+              anarg[j] = 0;
+              strcat(anarg,evptr);
+              j = strlen(anarg);
+            }
+            k = 0;
+          }
+          inev = 1;
+        }
+        else
+        {
+          anarg[j] = '$';
+          j++;
+        }
+        ines = 0;
+      break;
+      
       case '\'':
         if (ines == 0)
         {
@@ -94,15 +144,20 @@ char **splitargsintontsa(char *args)
         {
           anarg[j] = '\'';
           j++;
+          inev = 0;
         }
         ines = 0;
         lws = 0;
       break;
       
       case '"':
-        if (insq == 0 && ines==0) indq = 1-indq;
+        if (insq == 0 && ines==0)
+        {
+          indq = 1-indq;
+        }
         else
         {
+          inev = 0;
           anarg[j] = '"';
           j++;
         }
@@ -115,6 +170,20 @@ char **splitargsintontsa(char *args)
       case '\n':
         if (insq == 0 && indq == 0 && ines == 0 && lws == 0)
         {
+          if (inev!=0)
+          {
+            anev[k] = 0;
+            if (k == 0) evptr = getenv("$");
+            else evptr = getenv(anev);
+            if (evptr != NULL)
+            {
+              anarg[j] = 0;
+              strcat(anarg,evptr);
+              j = strlen(anarg);
+            }
+            k = 0;
+            inev = 0;
+          }
           anarg[j] = 0;
           ans[n] = (char *) malloc(sizeof(char)*(j+1));
           if (ans[n] == NULL)
@@ -123,6 +192,7 @@ char **splitargsintontsa(char *args)
             for (j=0;j<n;j++)
             {
               free(ans[j]);
+              free(anarg);
             }
             free(ans);
             return NULL;
@@ -131,9 +201,24 @@ char **splitargsintontsa(char *args)
           	printf("## arg[%lu]=\"%s\"\n",n,ans[n]);
           n++;
           j = 0;
+          inev = 0;
         }
         else
         {
+          if (insq == 0 && ines == 0 && lws == 0)
+          {
+            inev = 0;
+            anev[k] = 0;
+            if (k == 0) evptr = getenv("$");
+            else evptr = getenv(anev);
+            if (evptr != NULL)
+            {
+              anarg[j] = 0;
+              strcat(anarg,evptr);
+              j = strlen(anarg);
+            }
+            k = 0;
+          }
           anarg[j] = args[i];
           j++;
         }
@@ -148,12 +233,34 @@ char **splitargsintontsa(char *args)
       default:
         ines = 0;
         lws = 0;
-        anarg[j] = args[i];
-        j++;
+        if (inev)
+        {
+          anev[k] = args[i];
+          k++;
+        }
+        else
+        {
+          anarg[j] = args[i];
+          j++;
+        }
       break;
     }
   }
   
+  if (inev!=0)
+  {
+    anev[k] = 0;
+    if (k == 0) evptr = getenv("$");
+    else evptr = getenv(anev);
+    if (evptr != NULL)
+    {
+      anarg[j] = 0;
+      strcat(anarg,evptr);
+      j = strlen(anarg);
+    }
+    k = 0;
+    inev = 0;
+  }
   anarg[j] = 0;
   ans[n] = (char *) malloc(sizeof(char)*(j+1));
   if (ans[n] == NULL)
@@ -162,14 +269,17 @@ char **splitargsintontsa(char *args)
     for (j=0;j<n;j++)
     {
       free(ans[j]);
+      free(anarg);
     }
     free(ans);
     return NULL;
   }
   strcpy(ans[n],anarg);
-  printf("## arg[%lu]=\"%s\"\n",n,ans[n]);
+  	printf("## arg[%lu]=\"%s\"\n",n,ans[n]);
   
   ans[nargs] = (char *) NULL;
+  
+  
   return ans;
 }
 
