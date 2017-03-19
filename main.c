@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xft/Xft.h>
+#include <signal.h>
 
 #include "xfuncs.h"
 #include "sfuncs.h"
@@ -11,7 +12,7 @@ char versionstr[] = "0.01.00";
 
 Display *thedisplay;
 int thescreen;
-Window mainwindow, subwindow;
+Window mainwindow = 0, subwindow = 0;
 struct MenuIDRel *winarray = NULL;
 long wasize = 0;
 /* XFontStruct *xfs = NULL; */
@@ -20,6 +21,8 @@ XftFont *keenfont = NULL, *sgafont = NULL;
 struct FontIDRel *fontarray = NULL;
 long fasize = 0;
 #endif
+
+int interrupted = 0;
 
 struct ItemActionRel *iactarray = NULL;
 long iaasize = 0;
@@ -32,6 +35,9 @@ XftColor xblack, xwhite, xgreen, xlime, xgrey, xsilver, xred, xmaroon, xblue,
          xnavy, xyellow, xbrown, xcyan, xteal, xmagenta, xfuchsia;
 XftColor *setxbgcol, *setxselcol, *setxunselcol;
 #endif
+
+
+void close_x(int returnval);
 
 
 /* Don't need this anymore! * /
@@ -49,6 +55,32 @@ int DoListFonts()
   XFreeFontNames(flist);
   return 1;
 }*/
+
+void handle_sigint(int sig)
+{
+  if (interrupted == 0)
+  {
+    	printf("# Interrupted!  Terminating...\n");
+    interrupted = 5;
+  }
+  else
+  {
+  	printf("# Already terminating!  Patience please!\n");
+  }
+}
+
+void handle_sigterm(int sig)
+{
+  if (interrupted == 0)
+  {
+    	printf("# Terminated!  Terminating...\n");
+    interrupted = 6;
+  }
+  else
+  {
+  	printf("# Already terminating!  Patience please!\n");
+  }
+}
 
 int ParseMenuFile(FILE *mf)
 {
@@ -693,13 +725,18 @@ int init_x()
 void close_x( int returnval)
 {
 /*  if (xfs != NULL) XFreeFont(thedisplay, xfs);  */
-  FreeWindow(mainwindow); /* Don't think I need this line either... */
+  if (mainwindow != 0) FreeWindow(mainwindow); /* Don't think I need this line either... */
+  	printf("# Freed mw\n");
   FreeGeneratedArrays();
+  	printf("# Freed Parsed Items/Menus/Fonts\n");
   DestroyItems();
+  	printf("# Freed Items\n");
   DestroyWins();
+  	printf("# Freed Windows\n");
 #ifdef HAVE_XFT
   if (keenfont != NULL) XftFontClose(thedisplay, keenfont);
   if (sgafont != NULL) XftFontClose(thedisplay, sgafont);
+  	printf("# Freed fonts\n");
   free_xft_colour(thedisplay, thescreen, &xblack);
   free_xft_colour(thedisplay, thescreen, &xwhite);
   free_xft_colour(thedisplay, thescreen, &xgreen);
@@ -716,10 +753,19 @@ void close_x( int returnval)
   free_xft_colour(thedisplay, thescreen, &xblue);
   free_xft_colour(thedisplay, thescreen, &xmagenta);
   free_xft_colour(thedisplay, thescreen, &xfuchsia);
+  	printf("# Freed colours\n");
 #endif
   clean_pwnlist();
+  	printf("# Freed children list\n");
+  	printf("# The Display = 0x%X\n",(unsigned long) thedisplay);
   XCloseDisplay(thedisplay);
+  	printf("# Closed the display\n");
+  signal(SIGINT, SIG_DFL);
+  signal(SIGTERM, SIG_DFL);
+  	printf("# Reset Signals\n");
   exit(returnval);
+  	printf("# Why are you still here?\n");
+  
 }
 
 int dosubwin()
@@ -890,6 +936,19 @@ int main(int argc, char *argv[])
   
   init_x();
   
+  if (signal(SIGINT, handle_sigint) == SIG_ERR)
+  {
+    perror(0);
+    fprintf(stderr, "Warning: Failed to register SIGINT handler!\n");
+  }
+  	else printf("# Registered SIGINT handler.\n");
+  if (signal(SIGTERM, handle_sigterm) == SIG_ERR)
+  {
+    perror(0);
+    fprintf(stderr, "Warning: Failed to register SIGTERM handler!\n");
+  }
+  	else printf("# Registered SIGTERM handler.\n");
+  
   if (ParseMenuFile(mf) == 0)
   {
     printf("Error Parsing Menu File!\n");
@@ -930,7 +989,7 @@ int main(int argc, char *argv[])
   Window lastwinclicked;
   struct WinPropNode *mwprop = FindWinProps(mainwindow);
   
-  while (1)
+  while (interrupted == 0)
   {
     /* Message Loop */
     XNextEvent(thedisplay, &event);
@@ -982,13 +1041,13 @@ int main(int argc, char *argv[])
       else if (text[0] == 27)
       {
         /* Back out */
-        unsigned long mmid = FindMainMenu();
+        unsigned long mmuid = FindMainMenu();
         long wai;
-        if (mmid != 0)
+        if (mmuid != 0)
         {
           for (wai = 0; wai < wasize; wai++)
           {
-            if (winarray[wai].id == mmid) break;
+            if (winarray[wai].id == mmuid) break;
           }
           if (wai<wasize && winarray[wai].win != event.xkey.window)
           {
@@ -1109,5 +1168,6 @@ int main(int argc, char *argv[])
     }
     
   }
+  close_x(interrupted);
   return 1;
 }

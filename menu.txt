@@ -55,7 +55,7 @@ NUM=2
 
 [ITEMS]
 # MUST ALWAYS BE SPECIFIED LAST!!!
-NUM=7
+NUM=8
 # Format:
 # MenuID, ItemMenuHandle, FontID, "Caption", Type, Action
 # Types:
@@ -67,6 +67,7 @@ NUM=7
 1, 1, 1, "MENU ITEM 1", N, -
 1, 2, 2, "SGA Menu Item", N, -
 1, 3, 1, "Launch Sub-Menu", M, 2
+1, 4, 1, "Exit Menu System!", X, -
 2, 1, 1, "SUBMENU ITEM 1", N, -
 2, 4, 2, "SGA SubMenu Item", N, -
 2, 5, 1, "Submenu Item 5", N, -
