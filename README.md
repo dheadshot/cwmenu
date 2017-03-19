@@ -11,7 +11,7 @@ This is basically how the menus look so far (in TinyCore Linux - Debian will hav
 - [ ] Some kind of digital clock?
 - [ ] Decide whether to have the menu system wait for item action commands to complete or not.
 - [ ] Deactivated Items.
-- [ ] Get the Escape key working to close a Submenu.
+- [X] Get the Escape key working to close a Submenu.
 - [X] Somehow match the background colours for X and Xft!  (At the moment, a grey background for instance results in boxes around the items).
 - [ ] \(Optional) Somehow remove flickering when resizing the window?
 - [ ] Add handlers for SIGINT and SIGTERM to safely close the program.
